@@ -31,9 +31,7 @@ import io.delta.flink.sink.utils.DeltaSinkTestUtils;
 import org.apache.flink.connector.file.sink.utils.FileSinkTestUtils;
 import org.apache.flink.connector.file.sink.utils.NoOpBucketWriter;
 import org.apache.flink.streaming.api.functions.sink.filesystem.BucketWriter;
-import org.apache.flink.streaming.api.functions.sink.filesystem.DeltaPendingFile;
 import org.apache.flink.streaming.api.functions.sink.filesystem.InProgressFileWriter;
-import org.apache.flink.streaming.api.functions.sink.filesystem.InProgressFileWriter.PendingFileRecoverable;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -121,55 +119,10 @@ public class DeltaCommitterTest {
             committable, deserialized, partitionSpec);
     }
 
-    @Test
-    public void testOnAfterCommitCalled() throws Exception {
-        // GIVEN
-        StubBucketWriter stubBucketWriter = new StubBucketWriter();
-        DeltaCommitter deltaCommitter = new DeltaCommitter(stubBucketWriter);
-
-        // WHEN
-        DeltaPendingFile deltaPendingFile = DeltaSinkTestUtils.getTestDeltaPendingFile();
-        RecordingDeltaPendingFile recPendingFile = new RecordingDeltaPendingFile(
-            deltaPendingFile.getPartitionSpec(),
-            deltaPendingFile.getFileName(),
-            deltaPendingFile.getPendingFile(),
-            deltaPendingFile.getRecordCount(),
-            deltaPendingFile.getFileSize(),
-            deltaPendingFile.getLastUpdateTime()
-        );
-        DeltaCommittable deltaCommittable =
-            new DeltaCommittable(recPendingFile, "1", 1);;
-        List<DeltaCommittable> toRetry = deltaCommitter.commit(
-            DeltaSinkTestUtils.committablesToAbstractCommittables(
-                Collections.singletonList(deltaCommittable)));
-
-        // THEN
-        assertTrue(recPendingFile.isCommitted());
-    }
     ///////////////////////////////////////////////////////////////////////////
     // Mock Classes
     ///////////////////////////////////////////////////////////////////////////
 
-    private static class RecordingDeltaPendingFile extends DeltaPendingFile {
-
-        private boolean committed;
-
-        RecordingDeltaPendingFile(LinkedHashMap<String, String> partitionSpec,
-            String fileName,
-            PendingFileRecoverable pendingFile, long recordCount, long fileSize,
-            long lastUpdateTime) {
-            super(partitionSpec, fileName, pendingFile, recordCount, fileSize, lastUpdateTime);
-        }
-
-        @Override
-        public void onAfterCommit() {
-            this.committed = true;
-        }
-
-        public boolean isCommitted() {
-            return committed;
-        }
-    }
     private static class RecordingPendingFile implements BucketWriter.PendingFile {
         private boolean committed;
 
