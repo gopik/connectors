@@ -185,6 +185,13 @@ public class DeltaPendingFile {
             lastUpdateTime);
     }
 
+    /**
+     * Called after the pending file is committed before invoking global committer.
+     * When this is called, the file has been committed to its final location.
+     */
+    public void onAfterCommit() {
+
+    }
     @Override
     public String toString() {
         String partitionSpecString = partitionSpec.keySet().stream()
