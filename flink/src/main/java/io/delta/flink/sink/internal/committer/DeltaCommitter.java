@@ -107,6 +107,8 @@ public class DeltaCommitter implements Committer<DeltaCommittable> {
             );
             bucketWriter.recoverPendingFile(committable.getDeltaPendingFile().getPendingFile())
                 .commitAfterRecovery();
+
+            committable.getDeltaPendingFile().onAfterCommit();
         }
         return Collections.emptyList();
     }
