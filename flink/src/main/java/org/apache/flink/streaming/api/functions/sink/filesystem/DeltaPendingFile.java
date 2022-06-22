@@ -24,13 +24,19 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import io.delta.flink.sink.internal.committables.DeltaCommittable;
+import io.delta.flink.sink.internal.writer.stats.DeltaFileStats;
+import io.delta.flink.sink.internal.writer.stats.ParquetFileStats;
+import org.apache.flink.core.fs.Path;
 import org.apache.flink.core.io.SimpleVersionedSerialization;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.core.memory.DataInputView;
 import org.apache.flink.core.memory.DataOutputView;
 import org.apache.flink.table.utils.PartitionPathUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.delta.standalone.actions.AddFile;
+import io.delta.standalone.types.StructType;
 
 /**
  * Wrapper class for {@link InProgressFileWriter.PendingFileRecoverable} object.
@@ -58,6 +64,7 @@ import io.delta.standalone.actions.AddFile;
  * </ol>
  */
 public class DeltaPendingFile {
+    private static final Logger LOG = LoggerFactory.getLogger(DeltaPendingFile.class);
 
     private final LinkedHashMap<String, String> partitionSpec;
 
@@ -112,20 +119,31 @@ public class DeltaPendingFile {
     /**
      * Converts {@link DeltaPendingFile} object to a {@link AddFile} object
      *
+     * @param basePath Base path for the file.
      * @return {@link AddFile} object generated from input
      */
-    public AddFile toAddFile() {
+    public AddFile toAddFile(Path basePath, StructType schema) {
         LinkedHashMap<String, String> partitionSpec = this.getPartitionSpec();
+        String stats = null;
         long modificationTime = this.getLastUpdateTime();
         String filePath = PartitionPathUtils.generatePartitionPath(partitionSpec) +
             this.getFileName();
+        try {
+            ParquetFileStats parquetStats = ParquetFileStats.readStats(
+                new Path(basePath, filePath).toString());
+            DeltaFileStats deltaStats = new DeltaFileStats(schema, parquetStats);
+            stats = deltaStats.toJson();
+        } catch (IOException ioe) {
+            // TODO: If we fail computing stats, we should throw and prevent commit.
+            LOG.error("failed computing stats", ioe);
+        }
         return new AddFile(
             filePath,
             partitionSpec,
             this.getFileSize(),
             modificationTime,
             true, // dataChange
-            null,
+            stats,
             null);
     }
 

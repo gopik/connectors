@@ -376,10 +376,21 @@ public class DeltaGlobalCommitter
         long numOutputRows = 0;
         long numOutputBytes = 0;
 
-        StringJoiner logFiles = new StringJoiner(", ");
-        for (CheckpointData data : checkpointData) {
-            logFiles.add(data.addFile.getPath());
-            commitActions.add(data.addFile);
+        StringBuilder logFiles = new StringBuilder();
+        for (DeltaCommittable deltaCommittable : committables) {
+            logFiles.append(" deltaPendingFile=").append(deltaCommittable.getDeltaPendingFile());
+        }
+        LOG.info("Files to be committed to the Delta table: " +
+            "appId=" + appId +
+            " checkpointId=" + checkpointId +
+            " files:" + logFiles
+        );
+        StructType streamSchema = SchemaConverter.toDeltaDataType(rowType);
+        LOG.info("Schema: " + streamSchema);
+        for (DeltaCommittable deltaCommittable : committables) {
+            DeltaPendingFile deltaPendingFile = deltaCommittable.getDeltaPendingFile();
+            AddFile action = deltaPendingFile.toAddFile(basePath, streamSchema);
+            addFileActions.add(action);
 
             DeltaPendingFile deltaPendingFile = data.committable.getDeltaPendingFile();
             Set<String> currentPartitionCols = deltaPendingFile.getPartitionSpec().keySet();

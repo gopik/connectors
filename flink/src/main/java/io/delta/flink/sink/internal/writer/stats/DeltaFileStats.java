@@ -15,6 +15,9 @@ import org.apache.parquet.column.statistics.IntStatistics;
 import org.apache.parquet.column.statistics.Statistics;
 import org.apache.parquet.hadoop.metadata.ColumnPath;
 import org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import static org.apache.flink.util.Preconditions.checkNotNull;
 
 import io.delta.standalone.types.BinaryType;
 import io.delta.standalone.types.BooleanType;
@@ -26,6 +29,7 @@ import io.delta.standalone.types.LongType;
 import io.delta.standalone.types.StructField;
 import io.delta.standalone.types.StructType;
 
+
 /**
  * Base class for stats of all data types.
  *
@@ -33,6 +37,7 @@ import io.delta.standalone.types.StructType;
  * add to {@link JsonStatFactory}.
  */
 abstract class JsonStat {
+    public static final Logger LOG = LoggerFactory.getLogger(JsonStat.class);
     protected ObjectMapper objectMapper;
     private final Statistics<?> stat;
     JsonStat(ObjectMapper objectMapper, Statistics<?> stat) {
@@ -104,6 +109,10 @@ class JsonStatFactory {
         return typeMap;
     }
     public JsonStat newJsonStat(DataType deltaDataType, Statistics<?> stat) {
+        JsonStat.LOG.info("newJsonStat: " + deltaDataType);
+        if (!typeMap.containsKey(deltaDataType.getClass())) {
+            return new JsonStatNoop(objectMapper, stat);
+        }
         switch (typeMap.get(deltaDataType.getClass())) {
             case BINARY:
                 return new JsonStatBinary(objectMapper, (BinaryStatistics) stat);
@@ -201,7 +210,7 @@ public class DeltaFileStats {
     private final JsonStatFactory statFactory;
 
     public DeltaFileStats(StructType schema, ParquetFileStats stats) {
-        this.schema = schema;
+        this.schema = checkNotNull(schema);
         this.stats = stats;
         this.objectMapper = new ObjectMapper();
         this.statFactory = new JsonStatFactory(objectMapper);
