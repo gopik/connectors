@@ -23,6 +23,7 @@ import io.delta.standalone.types.DoubleType;
 import io.delta.standalone.types.FloatType;
 import io.delta.standalone.types.IntegerType;
 import io.delta.standalone.types.LongType;
+import io.delta.standalone.types.StringType;
 import io.delta.standalone.types.StructField;
 import io.delta.standalone.types.StructType;
 
@@ -95,6 +96,7 @@ class JsonStatFactory {
                     break;
                 case BINARY:
                     typeMap.put(BinaryType.class, primitiveTypeName);
+                    typeMap.put(StringType.class, primitiveTypeName);
                     break;
                 case BOOLEAN:
                     typeMap.put(BooleanType.class, primitiveTypeName);
