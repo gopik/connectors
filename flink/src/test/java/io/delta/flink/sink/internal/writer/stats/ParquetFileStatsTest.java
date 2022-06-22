@@ -1,4 +1,4 @@
-package io.delta.flink.sink.stats;
+package io.delta.flink.sink.internal.writer.stats;
 
 import java.io.File;
 import java.nio.ByteBuffer;
@@ -6,7 +6,6 @@ import java.nio.ByteOrder;
 import java.util.Base64;
 
 import com.google.common.collect.ImmutableList;
-import io.delta.flink.sink.internal.writer.stats.ParquetFileStats;
 import org.apache.parquet.hadoop.metadata.ColumnPath;
 import org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName;
 import org.junit.Test;
