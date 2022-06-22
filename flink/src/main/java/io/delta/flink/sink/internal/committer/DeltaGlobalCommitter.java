@@ -270,9 +270,11 @@ public class DeltaGlobalCommitter
             " checkpointId=" + checkpointId +
             " files:" + logFiles
         );
+        StructType streamSchema = SchemaConverter.toDeltaDataType(rowType);
+        LOG.info("Schema: " + streamSchema);
         for (DeltaCommittable deltaCommittable : committables) {
             DeltaPendingFile deltaPendingFile = deltaCommittable.getDeltaPendingFile();
-            AddFile action = deltaPendingFile.toAddFile();
+            AddFile action = deltaPendingFile.toAddFile(basePath, streamSchema);
             addFileActions.add(action);
 
             Set<String> currentPartitionCols = deltaPendingFile.getPartitionSpec().keySet();
