@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -218,7 +219,7 @@ public class DeltaFileStats {
         this.statFactory = new JsonStatFactory(objectMapper);
     }
 
-    public String toJson() throws Exception {
+    public String toJson() {
         ObjectNode root = objectMapper.createObjectNode();
         root.set("numRecords", objectMapper.getNodeFactory().numberNode(stats.getRowCount()));
         root.set("minValues",
@@ -230,7 +231,11 @@ public class DeltaFileStats {
         root.set("nullCounts",
             getStat(schema, new ArrayList<>(),
                 (dt, stat) -> statFactory.newJsonStat(dt, stat).getNullCount()));
-        return objectMapper.writeValueAsString(root.toString());
+        try {
+            return objectMapper.writeValueAsString(root.toString());
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private JsonNode getStat(DataType dataType, ArrayList<String> path,
