@@ -209,7 +209,7 @@ public class DeltaFileStats {
         this.statFactory = new JsonStatFactory(objectMapper);
     }
 
-    public String toJson() {
+    public String toJson() throws Exception {
         ObjectNode root = objectMapper.createObjectNode();
         root.set("numRecords", objectMapper.getNodeFactory().numberNode(stats.getRowCount()));
         root.set("minValues",
@@ -221,7 +221,7 @@ public class DeltaFileStats {
         root.set("nullCounts",
             getStat(schema, new ArrayList<>(),
                 (dt, stat) -> statFactory.newJsonStat(dt, stat).getNullCount()));
-        return root.toString();
+        return objectMapper.writeValueAsString(root.toString());
     }
 
     private JsonNode getStat(DataType dataType, ArrayList<String> path,
