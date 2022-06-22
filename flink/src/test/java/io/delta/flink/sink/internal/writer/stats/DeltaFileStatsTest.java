@@ -30,7 +30,7 @@ public class DeltaFileStatsTest {
         DeltaFileStats deltaStats = new DeltaFileStats(schema, stats);
         String json = deltaStats.toJson();
         ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode root = objectMapper.readTree(json);
+        JsonNode root = objectMapper.readTree(objectMapper.readTree(json).asText());
         assertEquals(6, root.at("/numRecords").asLong());
 
         // nullCounts
