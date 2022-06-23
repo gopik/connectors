@@ -48,4 +48,21 @@ public class DeltaFileStatsTest {
         assertEquals("ODc=", root.at("/maxValues/f2").asText());
         assertEquals(23, root.at("/maxValues/f3").asLong());
     }
+
+    @Test
+    public void testToParquetStats() throws Exception {
+        File resourcesDirectory = new File("src/test/resources");
+        String initialTablePath =
+            resourcesDirectory.getAbsolutePath() + PATH;
+        ParquetFileStats stats = ParquetFileStats.readStats(initialTablePath);
+        StructType schema = new StructType()
+            .add(new StructField("f1", new BinaryType()))
+            .add(new StructField("f2", new StringType()))
+            .add(new StructField("f3", new IntegerType()));
+        DeltaFileStats deltaStats = new DeltaFileStats(schema, stats);
+        String json = deltaStats.toJson();
+        DeltaFileStats deltaFileStats = new DeltaFileStats(schema, null);
+        stats = deltaFileStats.fromJson(json);
+        assertEquals("", stats.getColumnStats().toString());
+    }
 }

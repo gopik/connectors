@@ -31,6 +31,11 @@ public class ParquetFileStats {
         this.columnStats = load(parquetMetadata);
     }
 
+    public ParquetFileStats(long rowCount, Map<ColumnPath, Statistics<?>> columnStats) {
+        this.rowCount = rowCount;
+        this.columnStats = columnStats;
+    }
+
     /**
      * Factory method to read stats given path to parquet file.
      *

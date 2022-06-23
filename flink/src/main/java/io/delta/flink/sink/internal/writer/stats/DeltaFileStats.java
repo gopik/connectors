@@ -1,9 +1,12 @@
 package io.delta.flink.sink.internal.writer.stats;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
+
+import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -15,10 +18,14 @@ import org.apache.parquet.column.statistics.FloatStatistics;
 import org.apache.parquet.column.statistics.IntStatistics;
 import org.apache.parquet.column.statistics.Statistics;
 import org.apache.parquet.hadoop.metadata.ColumnPath;
+import org.apache.parquet.io.api.Binary;
+import org.apache.parquet.schema.PrimitiveType;
 import org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName;
+import org.apache.parquet.schema.Type.Repetition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static org.apache.flink.util.Preconditions.checkNotNull;
+
 
 import io.delta.standalone.types.BinaryType;
 import io.delta.standalone.types.BooleanType;
@@ -110,6 +117,68 @@ class JsonStatFactory {
             }
         }
         return typeMap;
+    }
+    @Nullable
+    Statistics<?> toParquetStats(
+        DataType deltaDataType,
+        JsonNode max,
+        JsonNode min,
+        long nullCount) throws IOException {
+        if (!typeMap.containsKey(deltaDataType.getClass())) {
+            return null;
+        }
+        switch (typeMap.get(deltaDataType.getClass())) {
+            case BINARY:
+                Statistics<?> bs = Statistics.createStats(
+                    new PrimitiveType(
+                        Repetition.OPTIONAL,
+                        PrimitiveTypeName.BINARY, PrimitiveTypeName.BINARY.name()));
+                bs.incrementNumNulls(nullCount);
+                bs.updateStats(Binary.fromConstantByteArray(min.binaryValue()));
+                bs.updateStats(Binary.fromConstantByteArray(max.binaryValue()));
+                return bs;
+            case INT32:
+                Statistics<?> is = Statistics.createStats(new PrimitiveType(
+                    Repetition.OPTIONAL,
+                    PrimitiveTypeName.INT32,
+                    PrimitiveTypeName.INT32.name()
+                ));
+                is.incrementNumNulls(nullCount);
+                is.updateStats(min.intValue());
+                is.updateStats(max.intValue());
+                return is;
+            case INT64:
+                Statistics<?> ls = Statistics.createStats(new PrimitiveType(
+                    Repetition.OPTIONAL,
+                    PrimitiveTypeName.INT64,
+                    PrimitiveTypeName.INT64.name()
+                ));
+                ls.incrementNumNulls(nullCount);
+                ls.updateStats(min.longValue());
+                ls.updateStats(max.longValue());
+                return ls;
+
+            case DOUBLE:
+                Statistics<?> ds = Statistics.createStats(new PrimitiveType(
+                    Repetition.OPTIONAL,
+                    PrimitiveTypeName.DOUBLE,
+                    PrimitiveTypeName.DOUBLE.name()
+                ));
+                ds.incrementNumNulls(nullCount);
+                ds.updateStats(min.doubleValue());
+                ds.updateStats(max.doubleValue());
+                return ds;
+            case FLOAT:
+                Statistics<?> fs = Statistics.createStats(new PrimitiveType(
+                    Repetition.OPTIONAL,
+                    PrimitiveTypeName.FLOAT,
+                    PrimitiveTypeName.FLOAT.name()
+                ));
+                fs.incrementNumNulls(nullCount);
+                fs.updateStats(min.floatValue());
+                fs.updateStats(max.floatValue());
+        }
+        return null;
     }
     public JsonStat newJsonStat(DataType deltaDataType, Statistics<?> stat) {
         JsonStat.LOG.info("newJsonStat: " + deltaDataType);
@@ -259,8 +328,41 @@ public class DeltaFileStats {
                 stats.getColumnStats().get(ColumnPath.get(path.toArray(new String[0]))));
         }
     }
+    private void parseStats(
+        DataType dataType,
+        JsonNode deltaStats,
+        ArrayList<String> path,
+        Map<ColumnPath, Statistics<?>> parquetStatsMap) throws IOException {
+        if (dataType instanceof StructType) {
+            for (StructField field : ((StructType) dataType).getFields()) {
+                path.add(field.getName());
+                parseStats(field.getDataType(), deltaStats, path, parquetStatsMap);
+                path.remove(path.size() -1);
+            }
+        } else {
+            String fieldPath = String.join("/", path);
+            Statistics<?> parquetStats = statFactory.toParquetStats(
+                dataType,
+                deltaStats.at("/maxValues/" + fieldPath),
+                deltaStats.at("/minValues/" + fieldPath),
+                deltaStats.at("/nullCounts/" + fieldPath).asLong()
+                );
+            if (parquetStats != null) {
+                ColumnPath columnPath = ColumnPath.get(path.toArray(new String[0]));
+                parquetStatsMap.put(columnPath, parquetStats);
+            }
+        }
+    }
 
     public ParquetFileStats fromJson(String stats) {
-        return null;
+        try {
+            JsonNode root = objectMapper.readTree(objectMapper.readTree(stats).asText());
+            long numRecords = root.at("/numRecords").asLong();
+            Map<ColumnPath, Statistics<?>> parquetStats = new HashMap<>();
+            parseStats(schema, root, new ArrayList<>(), parquetStats);
+            return new ParquetFileStats(numRecords, parquetStats);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
