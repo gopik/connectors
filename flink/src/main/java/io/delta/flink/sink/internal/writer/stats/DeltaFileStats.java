@@ -356,12 +356,13 @@ public class DeltaFileStats {
 
     public ParquetFileStats fromJson(String stats) {
         try {
-            JsonNode root = objectMapper.readTree(objectMapper.readTree(stats).asText());
+            JsonNode root = objectMapper.readTree(stats);
             long numRecords = root.at("/numRecords").asLong();
             Map<ColumnPath, Statistics<?>> parquetStats = new HashMap<>();
             parseStats(schema, root, new ArrayList<>(), parquetStats);
             return new ParquetFileStats(numRecords, parquetStats);
         } catch (IOException e) {
+            JsonStat.LOG.error(stats, e);
             throw new RuntimeException(e);
         }
     }

@@ -67,7 +67,7 @@ public class DeltaFileStatsTest {
         DeltaFileStats deltaStats = new DeltaFileStats(schema, stats);
         String json = deltaStats.toJson();
         DeltaFileStats deltaFileStats = new DeltaFileStats(schema, null);
-        stats = deltaFileStats.fromJson(json);
+        stats = deltaFileStats.fromJson(new ObjectMapper().readTree(json).asText());
 
         Map<ColumnPath, Statistics<?>> columnStats = stats.getColumnStats();
 
