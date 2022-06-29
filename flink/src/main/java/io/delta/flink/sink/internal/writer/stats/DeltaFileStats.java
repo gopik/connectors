@@ -2,7 +2,6 @@ package io.delta.flink.sink.internal.writer.stats;
 
 import java.io.IOException;
 import java.util.ArrayList;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -27,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.delta.standalone.types.DataType;
-import io.delta.standalone.types.StructField;
 import io.delta.standalone.types.StructType;
 import io.delta.standalone.util.ParquetSchemaConverter;
 
