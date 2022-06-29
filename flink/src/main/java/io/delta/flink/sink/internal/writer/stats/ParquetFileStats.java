@@ -24,6 +24,7 @@ public class ParquetFileStats {
 
     private static final Logger LOG = LoggerFactory.getLogger(ParquetFileStats.class);
 
+
     private final Map<ColumnPath, Statistics<?>> columnStats;
     private long rowCount;
 
