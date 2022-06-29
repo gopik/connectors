@@ -2,10 +2,10 @@ package io.delta.flink.sink.internal.writer.stats;
 
 import java.io.IOException;
 import java.util.ArrayList;
+
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiFunction;
-
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -16,27 +16,20 @@ import org.apache.parquet.column.statistics.BinaryStatistics;
 import org.apache.parquet.column.statistics.DoubleStatistics;
 import org.apache.parquet.column.statistics.FloatStatistics;
 import org.apache.parquet.column.statistics.IntStatistics;
+import org.apache.parquet.column.statistics.LongStatistics;
 import org.apache.parquet.column.statistics.Statistics;
 import org.apache.parquet.hadoop.metadata.ColumnPath;
 import org.apache.parquet.io.api.Binary;
+import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.PrimitiveType;
-import org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName;
-import org.apache.parquet.schema.Type.Repetition;
+import org.apache.parquet.schema.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static org.apache.flink.util.Preconditions.checkNotNull;
 
-
-import io.delta.standalone.types.BinaryType;
-import io.delta.standalone.types.BooleanType;
 import io.delta.standalone.types.DataType;
-import io.delta.standalone.types.DoubleType;
-import io.delta.standalone.types.FloatType;
-import io.delta.standalone.types.IntegerType;
-import io.delta.standalone.types.LongType;
-import io.delta.standalone.types.StringType;
 import io.delta.standalone.types.StructField;
 import io.delta.standalone.types.StructType;
+import io.delta.standalone.util.ParquetSchemaConverter;
 
 
 /**
@@ -62,7 +55,7 @@ abstract class JsonStat {
 
 /**
  * Used for data types for which min/max stats are not supported in delta format
- * (eg. repeated field).
+ * (e.g. repeated field).
  *
  * This generates a Null json node which is then ignored and not added to the final json.
  * NullCounts are still supported.
@@ -85,112 +78,52 @@ class JsonStatNoop extends JsonStat {
  * Factory class that instantiates appropriate {@link JsonStat} based on the delta {@link DataType}.
  */
 class JsonStatFactory {
-    private final Map<Class<? extends DataType>, PrimitiveTypeName> typeMap;
     private final ObjectMapper objectMapper;
     JsonStatFactory(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
-        this.typeMap = initializeMapping();
-    }
-    private Map<Class<? extends DataType>, PrimitiveTypeName> initializeMapping() {
-        Map<Class<? extends DataType>, PrimitiveTypeName> typeMap = new HashMap<>();
-        for (PrimitiveTypeName primitiveTypeName : PrimitiveTypeName.values()) {
-            switch (primitiveTypeName) {
-                case DOUBLE:
-                    typeMap.put(DoubleType.class, primitiveTypeName);
-                    break;
-                case FLOAT:
-                    typeMap.put(FloatType.class, primitiveTypeName);
-                    break;
-                case INT32:
-                    typeMap.put(IntegerType.class, primitiveTypeName);
-                    break;
-                case INT64:
-                    typeMap.put(LongType.class, primitiveTypeName);
-                    break;
-                case BINARY:
-                    typeMap.put(BinaryType.class, primitiveTypeName);
-                    typeMap.put(StringType.class, primitiveTypeName);
-                    break;
-                case BOOLEAN:
-                    typeMap.put(BooleanType.class, primitiveTypeName);
-                    break;
-            }
-        }
-        return typeMap;
     }
     @Nullable
     Statistics<?> toParquetStats(
-        DataType deltaDataType,
+        PrimitiveType deltaDataType,
         JsonNode max,
         JsonNode min,
         long nullCount) throws IOException {
-        if (!typeMap.containsKey(deltaDataType.getClass())) {
-            return null;
-        }
-        switch (typeMap.get(deltaDataType.getClass())) {
+        Statistics<?> stat = Statistics.createStats(deltaDataType);
+        stat.incrementNumNulls(nullCount);
+
+        switch (deltaDataType.getPrimitiveTypeName()) {
             case BINARY:
-                Statistics<?> bs = Statistics.createStats(
-                    new PrimitiveType(
-                        Repetition.OPTIONAL,
-                        PrimitiveTypeName.BINARY, PrimitiveTypeName.BINARY.name()));
-                bs.incrementNumNulls(nullCount);
-                bs.updateStats(Binary.fromConstantByteArray(min.binaryValue()));
-                bs.updateStats(Binary.fromConstantByteArray(max.binaryValue()));
-                return bs;
+                stat.updateStats(Binary.fromConstantByteArray(min.binaryValue()));
+                stat.updateStats(Binary.fromConstantByteArray(max.binaryValue()));
+                return stat;
             case INT32:
-                Statistics<?> is = Statistics.createStats(new PrimitiveType(
-                    Repetition.OPTIONAL,
-                    PrimitiveTypeName.INT32,
-                    PrimitiveTypeName.INT32.name()
-                ));
-                is.incrementNumNulls(nullCount);
-                is.updateStats(min.intValue());
-                is.updateStats(max.intValue());
-                return is;
+                stat.updateStats(min.intValue());
+                stat.updateStats(max.intValue());
+                return stat;
             case INT64:
-                Statistics<?> ls = Statistics.createStats(new PrimitiveType(
-                    Repetition.OPTIONAL,
-                    PrimitiveTypeName.INT64,
-                    PrimitiveTypeName.INT64.name()
-                ));
-                ls.incrementNumNulls(nullCount);
-                ls.updateStats(min.longValue());
-                ls.updateStats(max.longValue());
-                return ls;
+                stat.updateStats(min.longValue());
+                stat.updateStats(max.longValue());
+                return stat;
 
             case DOUBLE:
-                Statistics<?> ds = Statistics.createStats(new PrimitiveType(
-                    Repetition.OPTIONAL,
-                    PrimitiveTypeName.DOUBLE,
-                    PrimitiveTypeName.DOUBLE.name()
-                ));
-                ds.incrementNumNulls(nullCount);
-                ds.updateStats(min.doubleValue());
-                ds.updateStats(max.doubleValue());
-                return ds;
+                stat.updateStats(min.doubleValue());
+                stat.updateStats(max.doubleValue());
+                return stat;
             case FLOAT:
-                Statistics<?> fs = Statistics.createStats(new PrimitiveType(
-                    Repetition.OPTIONAL,
-                    PrimitiveTypeName.FLOAT,
-                    PrimitiveTypeName.FLOAT.name()
-                ));
-                fs.incrementNumNulls(nullCount);
-                fs.updateStats(min.floatValue());
-                fs.updateStats(max.floatValue());
+                stat.updateStats(min.floatValue());
+                stat.updateStats(max.floatValue());
+                return stat;
         }
         return null;
     }
-    public JsonStat newJsonStat(DataType deltaDataType, Statistics<?> stat) {
-        JsonStat.LOG.info("newJsonStat: " + deltaDataType);
-        if (!typeMap.containsKey(deltaDataType.getClass())) {
-            return new JsonStatNoop(objectMapper, stat);
-        }
-        switch (typeMap.get(deltaDataType.getClass())) {
+    public JsonStat newJsonStat(Statistics<?> stat) {
+        switch (stat.type().getPrimitiveTypeName()) {
             case BINARY:
                 return new JsonStatBinary(objectMapper, (BinaryStatistics) stat);
             case INT32:
-            case INT64:
                 return new JsonStatInteger(objectMapper, (IntStatistics) stat);
+            case INT64:
+                return new JsonStatLong(objectMapper, (LongStatistics) stat);
             case DOUBLE:
                 return new JsonStatDouble(objectMapper, (DoubleStatistics) stat);
             case FLOAT:
@@ -252,6 +185,24 @@ class JsonStatInteger extends JsonStat {
     }
 }
 
+class JsonStatLong extends JsonStat {
+    private final LongStatistics stat;
+    JsonStatLong(ObjectMapper objectMapper, LongStatistics stat) {
+        super(objectMapper, stat);
+        this.stat = stat;
+    }
+
+    @Override
+    public JsonNode getMin() {
+        return objectMapper.getNodeFactory().numberNode(stat.getMin());
+    }
+
+    @Override
+    public JsonNode getMax() {
+        return objectMapper.getNodeFactory().numberNode(stat.getMax());
+    }
+}
+
 class JsonStatBinary extends JsonStat {
     private final BinaryStatistics stat;
     JsonStatBinary(ObjectMapper objectMapper, BinaryStatistics stat) {
@@ -276,13 +227,15 @@ class JsonStatBinary extends JsonStat {
  * file.
  */
 public class DeltaFileStats {
-    private final StructType schema;
+
     private final ObjectMapper objectMapper;
     private final ParquetFileStats stats;
     private final JsonStatFactory statFactory;
+    private final MessageType messageType;
+
 
     public DeltaFileStats(StructType schema, ParquetFileStats stats) {
-        this.schema = checkNotNull(schema);
+        this.messageType = ParquetSchemaConverter.deltaToParquet(schema);
         this.stats = stats;
         this.objectMapper = new ObjectMapper();
         this.statFactory = new JsonStatFactory(objectMapper);
@@ -292,29 +245,27 @@ public class DeltaFileStats {
         ObjectNode root = objectMapper.createObjectNode();
         root.set("numRecords", objectMapper.getNodeFactory().numberNode(stats.getRowCount()));
         root.set("minValues",
-            getStat(schema, new ArrayList<>(),
-                (dt, stat) -> statFactory.newJsonStat(dt, stat).getMin()));
+            getStat(messageType, new ArrayList<>(),
+                stat -> statFactory.newJsonStat(stat).getMin()));
         root.set("maxValues",
-            getStat(schema, new ArrayList<>(),
-                (dt, stat) -> statFactory.newJsonStat(dt, stat).getMax()));
+            getStat(messageType, new ArrayList<>(),
+                stat -> statFactory.newJsonStat(stat).getMax()));
         root.set("nullCounts",
-            getStat(schema, new ArrayList<>(),
-                (dt, stat) -> statFactory.newJsonStat(dt, stat).getNullCount()));
+            getStat(messageType, new ArrayList<>(),
+                stat -> statFactory.newJsonStat(stat).getNullCount()));
         try {
             return objectMapper.writeValueAsString(root.toString());
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
-
-    private JsonNode getStat(DataType dataType, ArrayList<String> path,
-        BiFunction<DataType, Statistics<?>, JsonNode> toJsonNode) {
-        if (dataType instanceof StructType) {
-            StructType struct = (StructType) dataType;
+    private JsonNode getStat(Type parquetType, ArrayList<String> path,
+        Function<Statistics<?>, JsonNode> toJsonNode) {
+        if (!parquetType.isPrimitive()) {
             ObjectNode root = objectMapper.createObjectNode();
-            for (StructField field : struct.getFields()) {
+            for (Type field : parquetType.asGroupType().getFields()) {
                 path.add(field.getName());
-                JsonNode result = getStat(field.getDataType(), path, toJsonNode);
+                JsonNode result = getStat(field, path, toJsonNode);
                 // If a stat result is null, say if it's not applicable to certain data types
                 // or the data type is not supported, skip adding to the json.
                 if (!result.isNull()) {
@@ -324,25 +275,25 @@ public class DeltaFileStats {
             }
             return root;
         } else {
-            return toJsonNode.apply(dataType,
-                stats.getColumnStats().get(ColumnPath.get(path.toArray(new String[0]))));
+            return toJsonNode.apply(stats.getColumnStats().get(
+                ColumnPath.get(path.toArray(new String[0]))));
         }
     }
     private void parseStats(
-        DataType dataType,
+        Type parquetType,
         JsonNode deltaStats,
         ArrayList<String> path,
         Map<ColumnPath, Statistics<?>> parquetStatsMap) throws IOException {
-        if (dataType instanceof StructType) {
-            for (StructField field : ((StructType) dataType).getFields()) {
+        if (!parquetType.isPrimitive()) {
+            for (Type field : parquetType.asGroupType().getFields()) {
                 path.add(field.getName());
-                parseStats(field.getDataType(), deltaStats, path, parquetStatsMap);
+                parseStats(field, deltaStats, path, parquetStatsMap);
                 path.remove(path.size() -1);
             }
         } else {
             String fieldPath = String.join("/", path);
             Statistics<?> parquetStats = statFactory.toParquetStats(
-                dataType,
+                parquetType.asPrimitiveType(),
                 deltaStats.at("/maxValues/" + fieldPath),
                 deltaStats.at("/minValues/" + fieldPath),
                 deltaStats.at("/nullCounts/" + fieldPath).asLong()
@@ -359,7 +310,7 @@ public class DeltaFileStats {
             JsonNode root = objectMapper.readTree(stats);
             long numRecords = root.at("/numRecords").asLong();
             Map<ColumnPath, Statistics<?>> parquetStats = new HashMap<>();
-            parseStats(schema, root, new ArrayList<>(), parquetStats);
+            parseStats(messageType, root, new ArrayList<>(), parquetStats);
             return new ParquetFileStats(numRecords, parquetStats);
         } catch (IOException e) {
             JsonStat.LOG.error(stats, e);
