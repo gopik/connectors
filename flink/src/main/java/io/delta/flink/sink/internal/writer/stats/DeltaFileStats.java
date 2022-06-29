@@ -47,7 +47,7 @@ abstract class JsonStat {
 
 /**
  * Used for data types for which min/max stats are not supported in delta format
- * (eg. repeated field).
+ * (e.g. repeated field).
  *
  * This generates a Null json node which is then ignored and not added to the final json.
  * NullCounts are still supported.
