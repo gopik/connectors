@@ -235,8 +235,4 @@ public class DeltaFileStats {
                 ColumnPath.get(path.toArray(new String[0]))));
         }
     }
-
-    public ParquetFileStats fromJson(String stats) {
-        return null;
-    }
 }
