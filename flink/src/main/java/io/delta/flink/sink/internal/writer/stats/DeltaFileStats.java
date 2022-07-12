@@ -213,6 +213,8 @@ public class DeltaFileStats {
             getStat(messageType, new ArrayList<>(),
                 stat -> statFactory.newJsonStat(stat).getNullCount()));
         try {
+            // Delta log requires stat json to be escaped as a string, hence we need 2
+            // level serialization.
             return objectMapper.writeValueAsString(root.toString());
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
