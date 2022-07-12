@@ -2,6 +2,7 @@ package io.delta.flink.sink.internal.writer.stats;
 
 import java.util.ArrayList;
 import java.util.function.Function;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
