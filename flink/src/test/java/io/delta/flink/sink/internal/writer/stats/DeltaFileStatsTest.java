@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.delta.standalone.types.BinaryType;
 import io.delta.standalone.types.IntegerType;
@@ -47,5 +48,25 @@ public class DeltaFileStatsTest {
         assertEquals("OQ==", root.at("/maxValues/f1").asText());
         assertEquals("ODc=", root.at("/maxValues/f2").asText());
         assertEquals(23, root.at("/maxValues/f3").asLong());
+    }
+
+    @Test
+    public void testDeltaStatus_unknownFieldInSchema() throws Exception {
+        File resourcesDirectory = new File("src/test/resources");
+        String initialTablePath =
+            resourcesDirectory.getAbsolutePath() + PATH;
+        ParquetFileStats stats = ParquetFileStats.readStats(initialTablePath);
+        StructType schema = new StructType()
+            .add(new StructField("f1", new BinaryType()))
+            .add(new StructField("f2", new StringType()))
+            .add(new StructField("f3", new IntegerType()))
+            .add(new StructField("unknown", new IntegerType()));
+        DeltaFileStats deltaStats = new DeltaFileStats(schema, stats);
+        String json = deltaStats.toJson();
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode root = objectMapper.readTree(objectMapper.readTree(json).asText());
+        assertTrue(root.at("/nullCounts/unknown").isMissingNode());
+        assertTrue(root.at("/minValues/unknown").isMissingNode());
+        assertTrue(root.at("/maxValues/unknown").isMissingNode());
     }
 }
