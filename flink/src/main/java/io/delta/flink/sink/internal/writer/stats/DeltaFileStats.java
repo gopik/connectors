@@ -64,6 +64,8 @@ class JsonStatNoop extends JsonStat {
     public JsonNode getMax() {
         return objectMapper.getNodeFactory().nullNode();
     }
+    @Override
+    public JsonNode getNullCount() { return objectMapper.getNodeFactory().nullNode(); }
 }
 
 /**
@@ -77,6 +79,9 @@ class JsonStatFactory {
 
 
     public JsonStat newJsonStat(Statistics<?> stat) {
+        if (stat == null) {
+            return new JsonStatNoop(objectMapper, stat);
+        }
         switch (stat.type().getPrimitiveTypeName()) {
             case BINARY:
                 return new JsonStatBinary(objectMapper, (BinaryStatistics) stat);
