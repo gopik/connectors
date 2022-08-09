@@ -49,6 +49,46 @@ abstract class JsonStat {
  * Used for data types for which min/max stats are not supported in delta format
  * (e.g. repeated field).
  *
+ * For a table with following schema:
+ *
+ * |-- a: struct
+ * |    |-- b: struct
+ * |    |    |-- c: long
+ * |-- d: int
+ *
+ * parquet stats would be captured as:
+ * recordCount: 1000
+ * a.b.c, LongStatistics{min=10, max=2000, nullCount=0}
+ * d,     IntStatistics{min=5, max=5, nullCount=20}
+ *
+ * This implementation recreates the nested structure required for delta stats which then become:
+ * {
+ *   "numRecords": 1000,
+ *   "minValues": {
+ *     "a": {
+ *       "b": {
+ *         "c": 10
+ *       }
+ *     },
+ *     "d": 5
+ *   },
+ *   "maxValues": {
+ *     "a": {
+ *       "b": {
+ *         "c": 2000
+ *       }
+ *     },
+ *     "d": 5
+ *   },
+ *   "nullCounts": {
+ *     "a": {
+ *       "b": {
+ *         "c": 0
+ *       }
+ *     },
+ *     "d": 20
+ *   }
+ * }
  * This generates a Null json node which is then ignored and not added to the final json.
  * NullCounts are still supported.
  */
