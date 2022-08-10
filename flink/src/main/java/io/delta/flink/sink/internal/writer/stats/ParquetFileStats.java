@@ -35,6 +35,10 @@ public class ParquetFileStats {
     /**
      * Factory method to read stats given path to parquet file.
      *
+     * Parquet metadata is stored in the file footer which contains row group metadata for each row
+     * group. Column level stats are at the row group level. We merge the stats across the row
+     * groups to compute file level stats.
+     *
      * @param path Path to a parquet file.
      * @return {@link ParquetFileStats}
      */
