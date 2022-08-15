@@ -60,10 +60,10 @@ public class ParquetFileStats {
         return rowCount;
     }
 
+    /** Iterates over row group metadata and merge column stats from different row groups. */
     private Map<ColumnPath, Statistics<?>> load(ParquetMetadata parquetMetadata) {
         Map<ColumnPath, Statistics<?>> columnStats = new HashMap<>();
         MessageType parquetSchema = parquetMetadata.getFileMetaData().getSchema();
-        // assert that parquetSchema and deltaSchema match.
         for (BlockMetaData rowGroup : parquetMetadata.getBlocks()) {
             this.rowCount += rowGroup.getRowCount();
             for (int colIdx = 0; colIdx < parquetSchema.getColumns().size(); colIdx++) {
