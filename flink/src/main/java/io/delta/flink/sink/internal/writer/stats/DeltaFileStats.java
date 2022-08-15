@@ -263,6 +263,7 @@ public class DeltaFileStats {
             throw new RuntimeException(e);
         }
     }
+
     private JsonNode getStat(Type parquetType, ArrayList<String> path,
         Function<Statistics<?>, JsonNode> toJsonNode) {
         if (!parquetType.isPrimitive()) {
