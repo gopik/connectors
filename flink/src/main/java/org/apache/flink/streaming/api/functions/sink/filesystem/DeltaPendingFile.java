@@ -119,7 +119,8 @@ public class DeltaPendingFile {
     /**
      * Converts {@link DeltaPendingFile} object to a {@link AddFile} object
      *
-     * @param basePath Base path for the file.
+     * @param basePath Root path of the DeltaTable.
+     * @param schema Schema of the delta table.
      * @return {@link AddFile} object generated from input
      */
     public AddFile toAddFile(Path basePath, StructType schema) {
@@ -129,13 +130,14 @@ public class DeltaPendingFile {
         String filePath = PartitionPathUtils.generatePartitionPath(partitionSpec) +
             this.getFileName();
         try {
+            // Pass absolute path of the parquet file (rootPath + filePath within the root)
             ParquetFileStats parquetStats = ParquetFileStats.readStats(
                 new Path(basePath, filePath).toString());
             DeltaFileStats deltaStats = new DeltaFileStats(schema, parquetStats);
             stats = deltaStats.toJson();
         } catch (IOException ioe) {
             // TODO: If we fail computing stats, we should throw and prevent commit.
-            LOG.error("failed computing stats", ioe);
+            LOG.error("failed computing stats for file " + filePath, ioe);
         }
         return new AddFile(
             filePath,
