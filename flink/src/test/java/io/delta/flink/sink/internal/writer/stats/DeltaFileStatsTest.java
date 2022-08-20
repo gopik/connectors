@@ -40,13 +40,13 @@ public class DeltaFileStatsTest {
         assertEquals(0, root.at("/nullCounts/f3").asLong());
 
         // minValues
-        assertEquals("MA==", root.at("/minValues/f1").asText());
-        assertEquals("MTc=", root.at("/minValues/f2").asText());
+        assertEquals("0", root.at("/minValues/f1").asText());
+        assertEquals("17", root.at("/minValues/f2").asText());
         assertEquals(7, root.at("/minValues/f3").asLong());
 
         // maxValues
-        assertEquals("OQ==", root.at("/maxValues/f1").asText());
-        assertEquals("ODc=", root.at("/maxValues/f2").asText());
+        assertEquals("9", root.at("/maxValues/f1").asText());
+        assertEquals("87", root.at("/maxValues/f2").asText());
         assertEquals(23, root.at("/maxValues/f3").asLong());
     }
 

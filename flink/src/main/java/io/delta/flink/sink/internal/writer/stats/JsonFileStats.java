@@ -8,6 +8,7 @@ import org.apache.parquet.column.statistics.FloatStatistics;
 import org.apache.parquet.column.statistics.IntStatistics;
 import org.apache.parquet.column.statistics.LongStatistics;
 import org.apache.parquet.column.statistics.Statistics;
+import org.apache.parquet.schema.LogicalTypeAnnotation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,11 +27,18 @@ public class JsonFileStats {
 
         public JsonStat newJsonStat(Statistics<?> stat) {
             if (stat == null) {
-                return new JsonStatNoop(objectMapper, stat);
+                return new JsonStatNoop(objectMapper, null);
             }
             switch (stat.type().getPrimitiveTypeName()) {
                 case BINARY:
-                    return new JsonStatBinary(objectMapper, (BinaryStatistics) stat);
+                    if (stat.type().getLogicalTypeAnnotation()
+                        == LogicalTypeAnnotation.stringType()) {
+                        // Supports stats only for string type columns and not arbitrary binary
+                        // type columns
+                        return new JsonStatString(objectMapper, (BinaryStatistics) stat);
+                    } else {
+                        return new JsonStatNoop(objectMapper, stat);
+                    }
                 case INT32:
                     return new JsonStatInteger(objectMapper, (IntStatistics) stat);
                 case INT64:
@@ -74,23 +82,23 @@ public class JsonFileStats {
     /**
      * Generates json stats for binary columns
      */
-    static class JsonStatBinary extends JsonStat {
+    static class JsonStatString extends JsonStat {
 
         private final BinaryStatistics stat;
 
-        JsonStatBinary(ObjectMapper objectMapper, BinaryStatistics stat) {
+        JsonStatString(ObjectMapper objectMapper, BinaryStatistics stat) {
             super(objectMapper, stat);
             this.stat = stat;
         }
 
         @Override
         public JsonNode getMin() {
-            return objectMapper.getNodeFactory().binaryNode(stat.genericGetMin().getBytes());
+            return objectMapper.getNodeFactory().textNode(stat.minAsString());
         }
 
         @Override
         public JsonNode getMax() {
-            return objectMapper.getNodeFactory().binaryNode(stat.genericGetMax().getBytes());
+            return objectMapper.getNodeFactory().textNode(stat.maxAsString());
         }
     }
 
