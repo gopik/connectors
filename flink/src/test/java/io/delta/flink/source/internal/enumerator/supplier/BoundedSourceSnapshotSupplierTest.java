@@ -3,7 +3,7 @@ package io.delta.flink.source.internal.enumerator.supplier;
 import java.util.Collections;
 import java.util.NoSuchElementException;
 
-import io.delta.flink.options.DeltaConfiguration;
+import io.delta.flink.options.DeltaConnectorConfiguration;
 import io.delta.flink.source.internal.DeltaSourceOptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,7 +40,7 @@ class BoundedSourceSnapshotSupplierTest {
     @Test
     public void shouldGetSnapshotFromTableHead() {
 
-        DeltaConfiguration sourceConfig = new DeltaConfiguration();
+        DeltaConnectorConfiguration sourceConfig = new DeltaConnectorConfiguration();
         when(deltaLog.snapshot()).thenReturn(deltaSnapshot);
 
         Snapshot snapshot = supplier.getSnapshot(sourceConfig);
@@ -55,7 +55,7 @@ class BoundedSourceSnapshotSupplierTest {
 
         long version = 10;
 
-        DeltaConfiguration sourceConfig = new DeltaConfiguration(
+        DeltaConnectorConfiguration sourceConfig = new DeltaConnectorConfiguration(
             Collections.singletonMap(DeltaSourceOptions.VERSION_AS_OF.key(), version)
         );
         when(deltaLog.getSnapshotForVersionAsOf(version)).thenReturn(deltaSnapshot);
@@ -73,7 +73,7 @@ class BoundedSourceSnapshotSupplierTest {
         long dateTime = TimestampFormatConverter.convertToTimestamp("2022-02-24 04:55:00");
         long timestamp = 1645678500000L;
 
-        DeltaConfiguration sourceConfig = new DeltaConfiguration(
+        DeltaConnectorConfiguration sourceConfig = new DeltaConnectorConfiguration(
             Collections.singletonMap(DeltaSourceOptions.TIMESTAMP_AS_OF.key(), dateTime)
         );
         when(deltaLog.getSnapshotForTimestampAsOf(timestamp)).thenReturn(deltaSnapshot);
@@ -89,7 +89,7 @@ class BoundedSourceSnapshotSupplierTest {
     public void shouldThrowIfNoSnapshotFound() {
         assertThrows(
             NoSuchElementException.class,
-            () -> supplier.getSnapshot(new DeltaConfiguration())
+            () -> supplier.getSnapshot(new DeltaConnectorConfiguration())
         );
     }
 }

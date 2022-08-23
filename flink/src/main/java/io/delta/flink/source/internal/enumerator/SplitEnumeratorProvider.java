@@ -2,7 +2,7 @@ package io.delta.flink.source.internal.enumerator;
 
 import java.io.Serializable;
 
-import io.delta.flink.options.DeltaConfiguration;
+import io.delta.flink.options.DeltaConnectorConfiguration;
 import io.delta.flink.source.internal.state.DeltaEnumeratorStateCheckpoint;
 import io.delta.flink.source.internal.state.DeltaSourceSplit;
 import org.apache.flink.api.connector.source.Boundedness;
@@ -26,13 +26,14 @@ public interface SplitEnumeratorProvider extends Serializable {
      * @param deltaTablePath      {@link Path} for Delta table.
      * @param configuration       Hadoop Configuration that should be used to read Parquet files.
      * @param enumContext         {@link SplitEnumeratorContext}.
-     * @param sourceConfiguration {@link DeltaConfiguration} used for creating Delta Source.
+     * @param sourceConfiguration {@link DeltaConnectorConfiguration} used for creating Delta
+     * Source.
      * @return {@link SplitEnumerator} instance.
      */
     SplitEnumerator<DeltaSourceSplit, DeltaEnumeratorStateCheckpoint<DeltaSourceSplit>>
         createInitialStateEnumerator(Path deltaTablePath, Configuration configuration,
         SplitEnumeratorContext<DeltaSourceSplit> enumContext,
-        DeltaConfiguration sourceConfiguration);
+        DeltaConnectorConfiguration sourceConfiguration);
 
 
     /**
@@ -47,14 +48,15 @@ public interface SplitEnumeratorProvider extends Serializable {
      *                            create {@link SplitEnumerator} instance.
      * @param configuration       Hadoop Configuration that should be used to read Parquet files.
      * @param enumContext         {@link SplitEnumeratorContext}.
-     * @param sourceConfiguration {@link DeltaConfiguration} used for creating Delta Source.
+     * @param sourceConfiguration {@link DeltaConnectorConfiguration} used for creating Delta
+     *  Source.
      * @return {@link SplitEnumerator} instance.
      */
     SplitEnumerator<DeltaSourceSplit, DeltaEnumeratorStateCheckpoint<DeltaSourceSplit>>
         createEnumeratorForCheckpoint(
         DeltaEnumeratorStateCheckpoint<DeltaSourceSplit> checkpoint, Configuration configuration,
         SplitEnumeratorContext<DeltaSourceSplit> enumContext,
-        DeltaConfiguration sourceConfiguration);
+        DeltaConnectorConfiguration sourceConfiguration);
 
     /**
      * @return {@link Boundedness} type for {@link SplitEnumerator} created by this provider.

@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import io.delta.flink.options.DeltaConfiguration;
+import io.delta.flink.options.DeltaConnectorConfiguration;
 import io.delta.flink.source.internal.DeltaSourceOptions;
 import io.delta.flink.options.DeltaConfigOption;
 import io.delta.flink.source.internal.builder.DeltaSourceBuilderBase;
@@ -211,7 +211,7 @@ public abstract class RowDataDeltaSourceBuilderTestBase {
         DeltaSourceBuilderBase<?, ?> builder = getBuilderAllColumns();
         builder.option(DeltaSourceOptions.STARTING_VERSION.key(), 10);
 
-        DeltaConfiguration originalConfiguration = builder.getSourceConfiguration();
+        DeltaConnectorConfiguration originalConfiguration = builder.getSourceConfiguration();
 
         // making sure that "startingVersion" option was added and configuration has no
         // "updateCheckIntervalMillis" and "updateCheckDelayMillis" options set.

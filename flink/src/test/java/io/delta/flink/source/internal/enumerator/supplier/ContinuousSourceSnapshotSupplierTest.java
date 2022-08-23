@@ -3,7 +3,7 @@ package io.delta.flink.source.internal.enumerator.supplier;
 import java.util.Collections;
 import java.util.NoSuchElementException;
 
-import io.delta.flink.options.DeltaConfiguration;
+import io.delta.flink.options.DeltaConnectorConfiguration;
 import io.delta.flink.source.internal.DeltaSourceOptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,7 +40,7 @@ class ContinuousSourceSnapshotSupplierTest {
     @Test
     public void shouldGetSnapshotFromTableHead() {
 
-        DeltaConfiguration sourceConfig = new DeltaConfiguration();
+        DeltaConnectorConfiguration sourceConfig = new DeltaConnectorConfiguration();
         when(deltaLog.snapshot()).thenReturn(deltaSnapshot);
 
         Snapshot snapshot = supplier.getSnapshot(sourceConfig);
@@ -55,7 +55,7 @@ class ContinuousSourceSnapshotSupplierTest {
 
         String version = "10";
 
-        DeltaConfiguration sourceConfig = new DeltaConfiguration(
+        DeltaConnectorConfiguration sourceConfig = new DeltaConnectorConfiguration(
             Collections.singletonMap(DeltaSourceOptions.STARTING_VERSION.key(), version)
         );
         when(deltaLog.getSnapshotForVersionAsOf(Long.parseLong(version))).thenReturn(deltaSnapshot);
@@ -72,7 +72,7 @@ class ContinuousSourceSnapshotSupplierTest {
 
         String version = "LaTeSt"; // option processing is case-insensitive.
 
-        DeltaConfiguration sourceConfig = new DeltaConfiguration(
+        DeltaConnectorConfiguration sourceConfig = new DeltaConnectorConfiguration(
             Collections.singletonMap(DeltaSourceOptions.STARTING_VERSION.key(), version)
         );
         when(deltaLog.snapshot()).thenReturn(deltaSnapshot);
@@ -90,7 +90,7 @@ class ContinuousSourceSnapshotSupplierTest {
         long dateTime = TimestampFormatConverter.convertToTimestamp("2022-02-24 04:55:00");
         long timestamp = 1645678500000L;
 
-        DeltaConfiguration sourceConfig = new DeltaConfiguration(
+        DeltaConnectorConfiguration sourceConfig = new DeltaConnectorConfiguration(
             Collections.singletonMap(DeltaSourceOptions.STARTING_TIMESTAMP.key(), dateTime)
         );
         long snapshotVersion = deltaSnapshot.getVersion();
@@ -109,7 +109,7 @@ class ContinuousSourceSnapshotSupplierTest {
     public void shouldThrowIfNoSnapshotFound() {
         assertThrows(
             NoSuchElementException.class,
-            () -> supplier.getSnapshot(new DeltaConfiguration())
+            () -> supplier.getSnapshot(new DeltaConnectorConfiguration())
         );
     }
 }

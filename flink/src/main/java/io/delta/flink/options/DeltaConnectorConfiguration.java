@@ -10,13 +10,13 @@ import io.delta.flink.source.internal.DeltaSourceOptions;
 import org.apache.flink.configuration.ConfigOption;
 
 /**
- * This class keeps {@link DeltaSourceOptions} used for {@link io.delta.flink.source.DeltaSource}
+ * This class keeps options used for delta source and sink connectors.
  * instance.
  *
- * @implNote This class should not be used directly by user but rather indirectly through {@code
- * BaseDeltaSourceStepBuilder} which will have dedicated setter methods for public options.
+ * @implNote This class should not be used directly by user but rather indirectly through source or
+ * sink builders which will have dedicated setter methods for public options.
  */
-public class DeltaConfiguration implements Serializable {
+public class DeltaConnectorConfiguration implements Serializable {
 
     /**
      * Map of used Options. The map entry key is a string representation of used {@link
@@ -30,9 +30,9 @@ public class DeltaConfiguration implements Serializable {
     private final Map<String, Object> usedSourceOptions = new HashMap<>();
 
     /**
-     * Creates {@link DeltaConfiguration} instance without any options.
+     * Creates {@link DeltaConnectorConfiguration} instance without any options.
      */
-    public DeltaConfiguration() {
+    public DeltaConnectorConfiguration() {
 
     }
 
@@ -40,19 +40,19 @@ public class DeltaConfiguration implements Serializable {
      * Creates a copy of DeltaSourceConfiguration. Changes to the copy object do not influence
      * the state of the original object.
      */
-    public DeltaConfiguration copy() {
-        return new DeltaConfiguration(this.usedSourceOptions);
+    public DeltaConnectorConfiguration copy() {
+        return new DeltaConnectorConfiguration(this.usedSourceOptions);
     }
 
     /**
-     * Creates an instance of {@link DeltaConfiguration} using provided options.
-     * @param options options that should be added to {@link DeltaConfiguration}.
+     * Creates an instance of {@link DeltaConnectorConfiguration} using provided options.
+     * @param options options that should be added to {@link DeltaConnectorConfiguration}.
      */
-    public DeltaConfiguration(Map<String, Object> options) {
+    public DeltaConnectorConfiguration(Map<String, Object> options) {
         this.usedSourceOptions.putAll(options);
     }
 
-    public <T> DeltaConfiguration addOption(DeltaConfigOption<T> name, T value) {
+    public <T> DeltaConnectorConfiguration addOption(DeltaConfigOption<T> name, T value) {
         this.usedSourceOptions.put(name.key(), value);
         return this;
     }

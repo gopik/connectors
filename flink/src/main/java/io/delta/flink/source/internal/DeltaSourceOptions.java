@@ -5,7 +5,7 @@ import java.util.Map;
 
 import io.delta.flink.options.BooleanOptionTypeConverter;
 import io.delta.flink.options.DeltaConfigOption;
-import io.delta.flink.options.DeltaConfiguration;
+import io.delta.flink.options.DeltaConnectorConfiguration;
 import io.delta.flink.options.NonNegativeNumberTypeConverter;
 import io.delta.flink.options.StartingVersionOptionTypeConverter;
 import io.delta.flink.options.TimestampOptionTypeConverter;
@@ -16,9 +16,9 @@ import org.apache.flink.configuration.ConfigOptions;
  * their type and default values. It may be viewed as a kind of dictionary class. This class will be
  * used both by Streaming and Table source.
  *
- * @implNote This class is used as a dictionary to work with {@link DeltaConfiguration} class
- * that contains an actual configuration options used for particular {@code DeltaSourceInternal}
- * instance.
+ * @implNote This class is used as a dictionary to work with {@link DeltaConnectorConfiguration}
+ * class that contains an actual configuration options used for particular
+ * {@code DeltaSourceInternal} instance.
  */
 public class DeltaSourceOptions {
 
@@ -206,7 +206,7 @@ public class DeltaSourceOptions {
      * source builder. This is needed to avoid anny issues caused by schema changes that might have
      * happened between source initialization and enumerator initialization. The version of the
      * snapshot used for schema discovery in Source builder is passed to the SplitEnumerator via
-     * {@link DeltaConfiguration} using LOADED_SCHEMA_SNAPSHOT_VERSION option.
+     * {@link DeltaConnectorConfiguration} using LOADED_SCHEMA_SNAPSHOT_VERSION option.
      * <p>
      * When the job is submitted to the Flink cluster, the entire job graph including operators,
      * source and sink classes is serialized on a "client side" and deserialized back on a Job

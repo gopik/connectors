@@ -74,22 +74,22 @@ public class DeltaConfigOption<T> {
     }
 
     //-------Keeping type safety with implementation of a Visitor pattern -------//
-    public void setOnConfig(DeltaConfiguration sourceConfiguration, boolean value) {
+    public void setOnConfig(DeltaConnectorConfiguration sourceConfiguration, boolean value) {
         T convertedValue = typeConverter.convertType(this, value);
         sourceConfiguration.addOption(this, convertedValue);
     }
 
-    public void setOnConfig(DeltaConfiguration sourceConfiguration, int value) {
+    public void setOnConfig(DeltaConnectorConfiguration sourceConfiguration, int value) {
         T convertedValue = typeConverter.convertType(this, value);
         sourceConfiguration.addOption(this, convertedValue);
     }
 
-    public void setOnConfig(DeltaConfiguration sourceConfiguration, long value) {
+    public void setOnConfig(DeltaConnectorConfiguration sourceConfiguration, long value) {
         T convertedValue = typeConverter.convertType(this, value);
         sourceConfiguration.addOption(this, convertedValue);
     }
 
-    public void setOnConfig(DeltaConfiguration sourceConfiguration, String value) {
+    public void setOnConfig(DeltaConnectorConfiguration sourceConfiguration, String value) {
         T convertedValue = typeConverter.convertType(this, value);
         sourceConfiguration.addOption(this, convertedValue);
     }

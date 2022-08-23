@@ -18,9 +18,13 @@
 
 package io.delta.flink.sink;
 
+import io.delta.flink.options.DeltaConfigOption;
+import io.delta.flink.options.DeltaConnectorConfiguration;
+import io.delta.flink.options.OptionValidator;
 import io.delta.flink.sink.internal.DeltaBucketAssigner;
 import io.delta.flink.sink.internal.DeltaPartitionComputer;
 import io.delta.flink.sink.internal.DeltaSinkBuilder;
+import io.delta.flink.sink.internal.DeltaSinkOptions;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.formats.parquet.ParquetWriterFactory;
 import org.apache.flink.formats.parquet.row.ParquetRowDataBuilder;
@@ -70,6 +74,10 @@ public class RowDataDeltaSinkBuilder {
      */
     private String[] partitionColumns = {};
 
+    private final DeltaConnectorConfiguration sinkConfiguration = new DeltaConnectorConfiguration();
+
+    private final OptionValidator optionValidator;
+
     /**
      * Creates instance of the builder for {@link DeltaSink}.
      *
@@ -90,6 +98,8 @@ public class RowDataDeltaSinkBuilder {
         this.conf = conf;
         this.rowType = rowType;
         this.mergeSchema = mergeSchema;
+        this.optionValidator = new OptionValidator(
+            sinkConfiguration, DeltaSinkOptions.USER_FACING_SINK_OPTIONS);
     }
 
     /**
@@ -124,6 +134,36 @@ public class RowDataDeltaSinkBuilder {
         return this;
     }
 
+
+    public RowDataDeltaSinkBuilder option(String optionName, String optionValue) {
+        optionValidator.option(optionName, optionValue);
+        return this;
+    }
+
+    /**
+     * Sets a configuration option.
+     */
+    public RowDataDeltaSinkBuilder option(String optionName, boolean optionValue) {
+        optionValidator.option(optionName, optionValue);
+        return this;
+    }
+
+    /**
+     * Sets a configuration option.
+     */
+    public RowDataDeltaSinkBuilder option(String optionName, int optionValue) {
+        optionValidator.option(optionName, optionValue);
+        return this;
+    }
+
+    /**
+     * Sets a configuration option.
+     */
+    public RowDataDeltaSinkBuilder option(String optionName, long optionValue) {
+        optionValidator.option(optionName, optionValue);
+        return this;
+    }
+
     /**
      * Creates the actual sink.
      *
@@ -145,7 +185,8 @@ public class RowDataDeltaSinkBuilder {
                 resolveBucketAssigner(),
                 OnCheckpointRollingPolicy.build(),
                 rowType,
-                mergeSchema
+                mergeSchema,
+                sinkConfiguration
             );
         return new DeltaSink<>(sinkBuilder);
     }
@@ -157,5 +198,16 @@ public class RowDataDeltaSinkBuilder {
         DeltaPartitionComputer<RowData> partitionComputer =
             new DeltaPartitionComputer.DeltaRowDataPartitionComputer(rowType, partitionColumns);
         return new DeltaBucketAssigner<>(partitionComputer);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <TYPE> DeltaConfigOption<TYPE> validateOptionName(String optionName) {
+        DeltaConfigOption<TYPE> option =
+            (DeltaConfigOption<TYPE>) DeltaSinkOptions.USER_FACING_SINK_OPTIONS.get(optionName);
+        if (option == null) {
+            throw new IllegalArgumentException(
+                String.format("Invalid option %s for table %s", tableBasePath, optionName));
+        }
+        return option;
     }
 }
