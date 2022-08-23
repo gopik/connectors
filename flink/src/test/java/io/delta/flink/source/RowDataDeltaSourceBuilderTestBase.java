@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import io.delta.flink.source.internal.DeltaSourceConfiguration;
+import io.delta.flink.options.DeltaConfiguration;
 import io.delta.flink.source.internal.DeltaSourceOptions;
-import io.delta.flink.source.internal.builder.DeltaConfigOption;
+import io.delta.flink.options.DeltaConfigOption;
 import io.delta.flink.source.internal.builder.DeltaSourceBuilderBase;
 import io.delta.flink.source.internal.exceptions.DeltaSourceValidationException;
 import org.apache.hadoop.conf.Configuration;
@@ -211,7 +211,7 @@ public abstract class RowDataDeltaSourceBuilderTestBase {
         DeltaSourceBuilderBase<?, ?> builder = getBuilderAllColumns();
         builder.option(DeltaSourceOptions.STARTING_VERSION.key(), 10);
 
-        DeltaSourceConfiguration originalConfiguration = builder.getSourceConfiguration();
+        DeltaConfiguration originalConfiguration = builder.getSourceConfiguration();
 
         // making sure that "startingVersion" option was added and configuration has no
         // "updateCheckIntervalMillis" and "updateCheckDelayMillis" options set.

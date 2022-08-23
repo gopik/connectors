@@ -5,8 +5,9 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import io.delta.flink.options.DeltaConfigOption;
+import io.delta.flink.options.DeltaConfiguration;
 import io.delta.flink.source.DeltaSource;
-import io.delta.flink.source.internal.DeltaSourceConfiguration;
 import io.delta.flink.source.internal.DeltaSourceOptions;
 import io.delta.flink.source.internal.enumerator.supplier.SnapshotSupplier;
 import io.delta.flink.source.internal.enumerator.supplier.SnapshotSupplierFactory;
@@ -74,7 +75,7 @@ public abstract class DeltaSourceBuilderBase<T, SELF> {
      * A placeholder object for Delta source configuration used for {@link DeltaSourceBuilderBase}
      * instance.
      */
-    protected final DeltaSourceConfiguration sourceConfiguration = new DeltaSourceConfiguration();
+    protected final DeltaConfiguration sourceConfiguration = new DeltaConfiguration();
 
     /**
      * A {@link Path} to Delta table that should be read by created {@link
@@ -157,10 +158,10 @@ public abstract class DeltaSourceBuilderBase<T, SELF> {
     }
 
     /**
-     * @return A copy of {@link DeltaSourceConfiguration} used by builder. The changes made on
+     * @return A copy of {@link DeltaConfiguration} used by builder. The changes made on
      * returned copy do not change the state of builder's configuration.
      */
-    public DeltaSourceConfiguration getSourceConfiguration() {
+    public DeltaConfiguration getSourceConfiguration() {
         return sourceConfiguration.copy();
     }
 

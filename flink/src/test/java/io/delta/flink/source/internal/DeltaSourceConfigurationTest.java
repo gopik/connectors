@@ -1,5 +1,6 @@
 package io.delta.flink.source.internal;
 
+import io.delta.flink.options.DeltaConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 import static io.delta.flink.source.internal.utils.TestOptions.*;
@@ -9,11 +10,11 @@ import static org.hamcrest.core.IsNull.nullValue;
 
 public class DeltaSourceConfigurationTest {
 
-    private DeltaSourceConfiguration configuration;
+    private DeltaConfiguration configuration;
 
     @Before
     public void setUp() {
-        configuration = new DeltaSourceConfiguration();
+        configuration = new DeltaConfiguration();
     }
 
     @Test

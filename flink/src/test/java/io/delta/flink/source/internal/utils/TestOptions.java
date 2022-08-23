@@ -2,7 +2,7 @@ package io.delta.flink.source.internal.utils;
 
 import java.util.UUID;
 
-import io.delta.flink.source.internal.builder.DeltaConfigOption;
+import io.delta.flink.options.DeltaConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 
 public class TestOptions {

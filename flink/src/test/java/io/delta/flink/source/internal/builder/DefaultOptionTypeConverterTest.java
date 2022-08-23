@@ -1,5 +1,7 @@
 package io.delta.flink.source.internal.builder;
 
+import io.delta.flink.options.DefaultOptionTypeConverter;
+import io.delta.flink.options.OptionTypeConverter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static io.delta.flink.source.internal.utils.TestOptions.*;

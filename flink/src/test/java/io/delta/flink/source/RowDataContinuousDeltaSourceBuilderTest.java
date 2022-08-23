@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.List;
 
 import io.delta.flink.source.internal.DeltaSourceOptions;
-import io.delta.flink.source.internal.builder.DeltaConfigOption;
+import io.delta.flink.options.DeltaConfigOption;
 import io.delta.flink.source.internal.builder.DeltaSourceBuilderBase;
 import io.delta.flink.source.internal.enumerator.supplier.TimestampFormatConverter;
 import io.delta.flink.source.internal.exceptions.DeltaSourceValidationException;

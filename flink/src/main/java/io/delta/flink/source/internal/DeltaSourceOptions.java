@@ -3,11 +3,12 @@ package io.delta.flink.source.internal;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.delta.flink.source.internal.builder.BooleanOptionTypeConverter;
-import io.delta.flink.source.internal.builder.DeltaConfigOption;
-import io.delta.flink.source.internal.builder.NonNegativeNumberTypeConverter;
-import io.delta.flink.source.internal.builder.StartingVersionOptionTypeConverter;
-import io.delta.flink.source.internal.builder.TimestampOptionTypeConverter;
+import io.delta.flink.options.BooleanOptionTypeConverter;
+import io.delta.flink.options.DeltaConfigOption;
+import io.delta.flink.options.DeltaConfiguration;
+import io.delta.flink.options.NonNegativeNumberTypeConverter;
+import io.delta.flink.options.StartingVersionOptionTypeConverter;
+import io.delta.flink.options.TimestampOptionTypeConverter;
 import org.apache.flink.configuration.ConfigOptions;
 
 /**
@@ -15,7 +16,7 @@ import org.apache.flink.configuration.ConfigOptions;
  * their type and default values. It may be viewed as a kind of dictionary class. This class will be
  * used both by Streaming and Table source.
  *
- * @implNote This class is used as a dictionary to work with {@link DeltaSourceConfiguration} class
+ * @implNote This class is used as a dictionary to work with {@link DeltaConfiguration} class
  * that contains an actual configuration options used for particular {@code DeltaSourceInternal}
  * instance.
  */
@@ -205,7 +206,7 @@ public class DeltaSourceOptions {
      * source builder. This is needed to avoid anny issues caused by schema changes that might have
      * happened between source initialization and enumerator initialization. The version of the
      * snapshot used for schema discovery in Source builder is passed to the SplitEnumerator via
-     * {@link DeltaSourceConfiguration} using LOADED_SCHEMA_SNAPSHOT_VERSION option.
+     * {@link DeltaConfiguration} using LOADED_SCHEMA_SNAPSHOT_VERSION option.
      * <p>
      * When the job is submitted to the Flink cluster, the entire job graph including operators,
      * source and sink classes is serialized on a "client side" and deserialized back on a Job

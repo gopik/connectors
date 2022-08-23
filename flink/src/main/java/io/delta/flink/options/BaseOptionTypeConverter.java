@@ -1,4 +1,4 @@
-package io.delta.flink.source.internal.builder;
+package io.delta.flink.options;
 
 public abstract class BaseOptionTypeConverter<TYPE>
     implements OptionTypeConverter<TYPE> {
