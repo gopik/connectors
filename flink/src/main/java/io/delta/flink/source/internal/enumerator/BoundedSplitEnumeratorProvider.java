@@ -3,7 +3,7 @@ package io.delta.flink.source.internal.enumerator;
 import java.util.Collections;
 import static java.util.Collections.emptyList;
 
-import io.delta.flink.options.DeltaConnectorConfiguration;
+import io.delta.flink.internal.options.DeltaConnectorConfiguration;
 import io.delta.flink.source.internal.enumerator.processor.SnapshotProcessor;
 import io.delta.flink.source.internal.file.AddFileEnumerator;
 import io.delta.flink.source.internal.state.DeltaEnumeratorStateCheckpoint;

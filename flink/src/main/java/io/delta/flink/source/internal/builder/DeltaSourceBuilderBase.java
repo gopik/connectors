@@ -5,8 +5,8 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import io.delta.flink.options.DeltaConfigOption;
-import io.delta.flink.options.DeltaConnectorConfiguration;
+import io.delta.flink.internal.options.DeltaConfigOption;
+import io.delta.flink.internal.options.DeltaConnectorConfiguration;
 import io.delta.flink.source.DeltaSource;
 import io.delta.flink.source.internal.DeltaSourceOptions;
 import io.delta.flink.source.internal.enumerator.supplier.SnapshotSupplier;

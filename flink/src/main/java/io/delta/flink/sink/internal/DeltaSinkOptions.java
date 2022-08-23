@@ -3,8 +3,8 @@ package io.delta.flink.sink.internal;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.delta.flink.options.BooleanOptionTypeConverter;
-import io.delta.flink.options.DeltaConfigOption;
+import io.delta.flink.internal.options.BooleanOptionTypeConverter;
+import io.delta.flink.internal.options.DeltaConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 
 public class DeltaSinkOptions {

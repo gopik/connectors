@@ -3,7 +3,7 @@ package io.delta.flink.source.internal.enumerator.processor;
 import java.util.List;
 import java.util.function.Consumer;
 
-import io.delta.flink.options.DeltaConnectorConfiguration;
+import io.delta.flink.internal.options.DeltaConnectorConfiguration;
 import io.delta.flink.source.internal.DeltaSourceOptions;
 import io.delta.flink.source.internal.enumerator.monitor.ChangesPerVersion;
 import io.delta.flink.source.internal.enumerator.monitor.TableMonitor;

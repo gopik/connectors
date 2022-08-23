@@ -3,12 +3,12 @@ package io.delta.flink.source.internal;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.delta.flink.options.BooleanOptionTypeConverter;
-import io.delta.flink.options.DeltaConfigOption;
-import io.delta.flink.options.DeltaConnectorConfiguration;
-import io.delta.flink.options.NonNegativeNumberTypeConverter;
-import io.delta.flink.options.StartingVersionOptionTypeConverter;
-import io.delta.flink.options.TimestampOptionTypeConverter;
+import io.delta.flink.internal.options.BooleanOptionTypeConverter;
+import io.delta.flink.internal.options.DeltaConfigOption;
+import io.delta.flink.internal.options.DeltaConnectorConfiguration;
+import io.delta.flink.internal.options.NonNegativeNumberTypeConverter;
+import io.delta.flink.internal.options.StartingVersionOptionTypeConverter;
+import io.delta.flink.internal.options.TimestampOptionTypeConverter;
 import org.apache.flink.configuration.ConfigOptions;
 
 /**

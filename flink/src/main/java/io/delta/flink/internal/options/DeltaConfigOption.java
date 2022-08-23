@@ -1,4 +1,4 @@
-package io.delta.flink.options;
+package io.delta.flink.internal.options;
 
 import org.apache.flink.configuration.ConfigOption;
 

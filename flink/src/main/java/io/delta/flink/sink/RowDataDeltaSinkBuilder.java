@@ -18,9 +18,9 @@
 
 package io.delta.flink.sink;
 
-import io.delta.flink.options.DeltaConfigOption;
-import io.delta.flink.options.DeltaConnectorConfiguration;
-import io.delta.flink.options.OptionValidator;
+import io.delta.flink.internal.options.DeltaConfigOption;
+import io.delta.flink.internal.options.DeltaConnectorConfiguration;
+import io.delta.flink.internal.options.OptionValidator;
 import io.delta.flink.sink.internal.DeltaBucketAssigner;
 import io.delta.flink.sink.internal.DeltaPartitionComputer;
 import io.delta.flink.sink.internal.DeltaSinkBuilder;

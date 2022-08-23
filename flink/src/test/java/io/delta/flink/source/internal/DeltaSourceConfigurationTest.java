@@ -1,6 +1,6 @@
 package io.delta.flink.source.internal;
 
-import io.delta.flink.options.DeltaConnectorConfiguration;
+import io.delta.flink.internal.options.DeltaConnectorConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 import static io.delta.flink.source.internal.utils.TestOptions.*;

@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import static java.util.Collections.emptyList;
 
-import io.delta.flink.options.DeltaConnectorConfiguration;
+import io.delta.flink.internal.options.DeltaConnectorConfiguration;
 import io.delta.flink.source.internal.DeltaSourceOptions;
 import io.delta.flink.source.internal.enumerator.monitor.TableMonitor;
 import io.delta.flink.source.internal.enumerator.processor.ActionProcessor;

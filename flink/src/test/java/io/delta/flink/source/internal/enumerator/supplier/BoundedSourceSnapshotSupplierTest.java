@@ -3,7 +3,7 @@ package io.delta.flink.source.internal.enumerator.supplier;
 import java.util.Collections;
 import java.util.NoSuchElementException;
 
-import io.delta.flink.options.DeltaConnectorConfiguration;
+import io.delta.flink.internal.options.DeltaConnectorConfiguration;
 import io.delta.flink.source.internal.DeltaSourceOptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
