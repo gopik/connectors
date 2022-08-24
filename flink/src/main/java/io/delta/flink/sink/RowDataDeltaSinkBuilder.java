@@ -74,8 +74,14 @@ public class RowDataDeltaSinkBuilder {
      */
     private String[] partitionColumns = {};
 
+    /**
+     * Stores sink configuration options.
+     */
     private final DeltaConnectorConfiguration sinkConfiguration = new DeltaConnectorConfiguration();
 
+    /**
+     * Validates sink configuration options.
+     */
     private final OptionValidator optionValidator;
 
     /**
@@ -200,14 +206,4 @@ public class RowDataDeltaSinkBuilder {
         return new DeltaBucketAssigner<>(partitionComputer);
     }
 
-    @SuppressWarnings("unchecked")
-    private <TYPE> DeltaConfigOption<TYPE> validateOptionName(String optionName) {
-        DeltaConfigOption<TYPE> option =
-            (DeltaConfigOption<TYPE>) DeltaSinkOptions.USER_FACING_SINK_OPTIONS.get(optionName);
-        if (option == null) {
-            throw new IllegalArgumentException(
-                String.format("Invalid option %s for table %s", tableBasePath, optionName));
-        }
-        return option;
-    }
 }

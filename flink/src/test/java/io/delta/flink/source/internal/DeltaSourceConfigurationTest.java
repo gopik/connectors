@@ -3,7 +3,7 @@ package io.delta.flink.source.internal;
 import io.delta.flink.internal.options.DeltaConnectorConfiguration;
 import org.junit.Before;
 import org.junit.Test;
-import static io.delta.flink.source.internal.utils.TestOptions.*;
+import static io.delta.flink.internal.options.TestOptions.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.IsNull.nullValue;

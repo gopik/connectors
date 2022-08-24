@@ -122,6 +122,10 @@ public class DeltaSinkBuilder<IN> implements Serializable {
      * performed whether the updates to the schema are compatible.
      */
     private boolean mergeSchema;
+
+    /**
+     * Configuration options for delta sink.
+     */
     private final DeltaConnectorConfiguration sinkConfiguration;
 
     /**

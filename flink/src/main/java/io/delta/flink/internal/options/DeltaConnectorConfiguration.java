@@ -11,7 +11,6 @@ import org.apache.flink.configuration.ConfigOption;
 
 /**
  * This class keeps options used for delta source and sink connectors.
- * instance.
  *
  * @implNote This class should not be used directly by user but rather indirectly through source or
  * sink builders which will have dedicated setter methods for public options.
@@ -19,10 +18,10 @@ import org.apache.flink.configuration.ConfigOption;
 public class DeltaConnectorConfiguration implements Serializable {
 
     /**
-     * Map of used Options. The map entry key is a string representation of used {@link
-     * DeltaSourceOptions} and the entry map value is equal option's value used for this entry.
+     * Map of used Options. The map entry key is a string representation of used option name
+     * and the entry map value is equal option's value used for this entry.
      *
-     * @implNote The {@code DeltaSourceConfiguration} object will be de/serialized by flink and
+     * @implNote The {@code DeltaConnectorConfiguration} object will be de/serialized by flink and
      * passed to Cluster node during job initialization. For that the map content has to be
      * serializable as well. The {@link ConfigOption} is not a serializable object, and therefore it
      * cannot be used as a map entry key.
