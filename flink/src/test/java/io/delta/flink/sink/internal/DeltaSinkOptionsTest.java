@@ -33,8 +33,7 @@ public class DeltaSinkOptionsTest {
         }
 
         assertThat(
-            "Probably not all ConfigOption Fields were added to DeltaSourceOptions "
-                + "VALID_SOURCE_OPTIONS or INNER_SOURCE_OPTIONS map",
+            "Probably not all ConfigOption Fields were added to DeltaSinkOptions ",
             configOptionFields.size(),
             equalTo(
                 DeltaSinkOptions.USER_FACING_SINK_OPTIONS.size()
