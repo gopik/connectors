@@ -18,7 +18,6 @@
 
 package io.delta.flink.sink;
 
-import io.delta.flink.internal.options.DeltaConfigOption;
 import io.delta.flink.internal.options.DeltaConnectorConfiguration;
 import io.delta.flink.internal.options.OptionValidator;
 import io.delta.flink.sink.internal.DeltaBucketAssigner;
