@@ -3,11 +3,11 @@ package io.delta.flink.sink.internal;
 import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
+import static java.lang.reflect.Modifier.isPublic;
+import static java.lang.reflect.Modifier.isStatic;
 
 import io.delta.flink.internal.options.DeltaConfigOption;
 
-import static java.lang.reflect.Modifier.isPublic;
-import static java.lang.reflect.Modifier.isStatic;
 import org.apache.flink.configuration.ConfigOption;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
