@@ -119,7 +119,7 @@ public class DeltaPendingFile {
     /**
      * Converts {@link DeltaPendingFile} object to a {@link AddFile} object
      *
-     * @param basePath Root path of the DeltaTable.
+     * @param basePath Root path of the delta table.
      * @param schema Schema of the delta table.
      * @return {@link AddFile} object generated from input
      */
