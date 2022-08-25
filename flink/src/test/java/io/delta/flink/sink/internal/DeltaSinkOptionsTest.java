@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import io.delta.flink.internal.options.DeltaConfigOption;
+
 import static java.lang.reflect.Modifier.isPublic;
 import static java.lang.reflect.Modifier.isStatic;
 import org.apache.flink.configuration.ConfigOption;
