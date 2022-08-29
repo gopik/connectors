@@ -78,6 +78,8 @@ public class DeltaPendingFile {
 
     private final long lastUpdateTime;
 
+    private String stats;
+
     public DeltaPendingFile(LinkedHashMap<String, String> partitionSpec,
                             String fileName,
                             InProgressFileWriter.PendingFileRecoverable pendingFile,
@@ -90,6 +92,7 @@ public class DeltaPendingFile {
         this.fileSize = fileSize;
         this.recordCount = recordCount;
         this.lastUpdateTime = lastUpdateTime;
+        this.stats = null;
     }
 
     public String getFileName() {
@@ -125,20 +128,9 @@ public class DeltaPendingFile {
      */
     public AddFile toAddFile(Path basePath, StructType schema) {
         LinkedHashMap<String, String> partitionSpec = this.getPartitionSpec();
-        String stats = null;
         long modificationTime = this.getLastUpdateTime();
         String filePath = PartitionPathUtils.generatePartitionPath(partitionSpec) +
             this.getFileName();
-        try {
-            // Pass absolute path of the parquet file (rootPath + filePath within the root)
-            ParquetFileStats parquetStats = ParquetFileStats.readStats(
-                new Path(basePath, filePath).toString());
-            DeltaFileStats deltaStats = new DeltaFileStats(schema, parquetStats);
-            stats = deltaStats.toJson();
-        } catch (IOException ioe) {
-            // TODO: If we fail computing stats, we should throw and prevent commit.
-            LOG.error("failed computing stats for file " + filePath, ioe);
-        }
         return new AddFile(
             filePath,
             partitionSpec,
@@ -217,5 +209,20 @@ public class DeltaPendingFile {
             " recordCount=" + recordCount +
             " partitionSpec=" + partitionSpecString +
             ")";
+    }
+
+    public void computeStats(Path basePath, StructType schema) {
+        String filePath = PartitionPathUtils.generatePartitionPath(partitionSpec) +
+            this.getFileName();
+        try {
+            // Pass absolute path of the parquet file (rootPath + filePath within the root)
+            ParquetFileStats parquetStats = ParquetFileStats.readStats(
+                new Path(basePath, filePath).toString());
+            DeltaFileStats deltaStats = new DeltaFileStats(schema, parquetStats);
+            stats = deltaStats.toJson();
+        } catch (IOException ioe) {
+            // TODO: If we fail computing stats, we should throw and prevent commit.
+            LOG.error("failed computing stats for file " + filePath, ioe);
+        }
     }
 }

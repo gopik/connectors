@@ -43,6 +43,11 @@ import static org.junit.Assert.assertTrue;
  * {@link org.apache.flink.connector.file.sink.committer.FileCommitterTest}
  */
 public class DeltaCommitterTest {
+    public void testCommitPendingFileWithStats() throws Exception {
+        // GIVEN
+        StubBucketWriter stubBucketWriter = new StubBucketWriter();
+        DeltaCommitter deltaCommitter = new DeltaCommitter(stubBucketWriter, )
+    }
 
     @Test
     public void testCommitPendingFile() throws Exception {
