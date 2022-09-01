@@ -23,14 +23,11 @@ import java.util.Collections;
 import java.util.List;
 
 import io.delta.flink.sink.DeltaSink;
-import io.delta.flink.sink.internal.SchemaConverter;
 import io.delta.flink.sink.internal.committables.DeltaCommittable;
 import io.delta.flink.sink.internal.writer.DeltaWriter;
 import org.apache.flink.api.connector.sink.Committer;
 import org.apache.flink.connector.file.sink.FileSink;
-import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.functions.sink.filesystem.BucketWriter;
-import org.apache.flink.table.types.logical.RowType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static org.apache.flink.util.Preconditions.checkNotNull;

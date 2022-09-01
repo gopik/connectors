@@ -325,7 +325,7 @@ public class DeltaWriterBucket<IN> {
                 fileSize,
                 deltaInProgressPart.getBulkPartWriter().getLastUpdateTime(),
                 SchemaConverter.toDeltaDataType(rowType),
-                true // readStats
+                false // readStats
             );
             pendingFiles.add(pendingFile);
             deltaInProgressPart = null;

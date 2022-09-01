@@ -30,11 +30,16 @@ import io.delta.flink.sink.internal.committables.DeltaCommittableSerializer;
 import io.delta.flink.sink.utils.DeltaSinkTestUtils;
 import org.apache.flink.connector.file.sink.utils.FileSinkTestUtils;
 import org.apache.flink.connector.file.sink.utils.NoOpBucketWriter;
+import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.functions.sink.filesystem.BucketWriter;
+import org.apache.flink.streaming.api.functions.sink.filesystem.DeltaPendingFile;
 import org.apache.flink.streaming.api.functions.sink.filesystem.InProgressFileWriter;
+import org.apache.flink.streaming.api.functions.sink.filesystem.InProgressFileWriter.PendingFileRecoverable;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
+import io.delta.standalone.types.StructType;
 
 /**
  * Tests for {@link DeltaCommitter}.
@@ -43,10 +48,35 @@ import static org.junit.Assert.assertTrue;
  * {@link org.apache.flink.connector.file.sink.committer.FileCommitterTest}
  */
 public class DeltaCommitterTest {
+    @Test
     public void testCommitPendingFileWithStats() throws Exception {
         // GIVEN
         StubBucketWriter stubBucketWriter = new StubBucketWriter();
         DeltaCommitter deltaCommitter = new DeltaCommitter(stubBucketWriter);
+
+        // WHEN
+        RecordingDeltaPendingFile pendingFile =
+            new RecordingDeltaPendingFile(
+                new LinkedHashMap<>(),
+                new Path("/"),
+                "",
+                new FileSinkTestUtils.TestPendingFileRecoverable(),
+                0,
+                0,
+                0,
+                new StructType(),
+                false);
+        DeltaCommittable deltaCommittable = new DeltaCommittable(
+            pendingFile,
+            "1",
+            1);
+
+        List<DeltaCommittable> toRetry = deltaCommitter.commit(
+                DeltaSinkTestUtils.committablesToAbstractCommittables(
+                        Collections.singletonList(deltaCommittable)));
+
+        // THEN
+        assertTrue(pendingFile.isCommitted());
     }
 
     @Test
@@ -127,6 +157,31 @@ public class DeltaCommitterTest {
     ///////////////////////////////////////////////////////////////////////////
     // Mock Classes
     ///////////////////////////////////////////////////////////////////////////
+    private static class RecordingDeltaPendingFile extends DeltaPendingFile {
+
+        private boolean committed;
+
+        RecordingDeltaPendingFile(LinkedHashMap<String, String> partitionSpec,
+            String fileName,
+            PendingFileRecoverable pendingFile, long recordCount, long fileSize,
+            long lastUpdateTime) {
+            super(partitionSpec, fileName, pendingFile, recordCount, fileSize, lastUpdateTime);
+        }
+
+        RecordingDeltaPendingFile(LinkedHashMap<String, String> partitionSpec, Path basePath,
+            String fileName, PendingFileRecoverable pendingFile, long recordCount, long fileSize,
+            long lastUpdateTime, StructType schema, boolean readStats) {
+            super(partitionSpec, basePath, fileName, pendingFile, recordCount, fileSize,
+                lastUpdateTime, schema, readStats);
+        }
+
+        @Override
+        public void onCommit() {
+            committed = true;
+        }
+
+        public boolean isCommitted() { return committed; }
+    }
 
     private static class RecordingPendingFile implements BucketWriter.PendingFile {
         private boolean committed;
