@@ -302,7 +302,7 @@ public class DeltaWriterTest {
             10,
             APP_ID,
             1,
-            rowType);
+            DeltaSinkTestUtils.TEST_ROW_TYPE);
     }
 
     /**
