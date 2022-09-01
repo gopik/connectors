@@ -1,3 +1,4 @@
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -31,6 +32,7 @@ import org.apache.flink.core.io.SimpleVersionedSerialization;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.core.memory.DataInputView;
 import org.apache.flink.core.memory.DataOutputView;
+import org.apache.flink.streaming.api.functions.sink.filesystem.InProgressFileWriter.PendingFileRecoverable;
 import org.apache.flink.table.utils.PartitionPathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,20 +82,78 @@ public class DeltaPendingFile {
 
     private String stats;
 
+    // Base path of the delta table
+    private final Path basePath;
+
+    // Schema for the delta table
+    private final StructType schema;
+
+    // Whether to read stats as part of creating delta log actions
+    private final boolean readStats;
+
     public DeltaPendingFile(LinkedHashMap<String, String> partitionSpec,
                             String fileName,
                             InProgressFileWriter.PendingFileRecoverable pendingFile,
                             long recordCount,
                             long fileSize,
-                            long lastUpdateTime) {
+                            long lastUpdateTime
+                            ) {
+        this(partitionSpec,
+            null,
+            fileName,
+            pendingFile,
+            recordCount,
+            fileSize,
+            lastUpdateTime,
+            null,
+            false);
+    }
+
+    public DeltaPendingFile(LinkedHashMap<String, String> partitionSpec,
+                            Path basePath,
+                            String fileName,
+                            InProgressFileWriter.PendingFileRecoverable pendingFile,
+                            long recordCount,
+                            long fileSize,
+                            long lastUpdateTime,
+                            StructType schema,
+                            boolean readStats) {
+
         this.partitionSpec = partitionSpec;
+        this.basePath = basePath;
         this.fileName = fileName;
         this.pendingFile = pendingFile;
         this.fileSize = fileSize;
         this.recordCount = recordCount;
         this.lastUpdateTime = lastUpdateTime;
+        this.readStats = readStats;
+        this.schema = schema;
         this.stats = null;
     }
+
+
+    public static void serializeV2(
+        DeltaPendingFile deltaPendingFile,
+        DataOutputView dataOutputView,
+        SimpleVersionedSerializer<PendingFileRecoverable> pendingFileSerializer)
+        throws IOException {
+
+        serialize(deltaPendingFile, dataOutputView, pendingFileSerializer);
+        if (deltaPendingFile.basePath != null) {
+            dataOutputView.writeBoolean(true);
+            dataOutputView.writeUTF(deltaPendingFile.basePath.getPath());
+        } else {
+            dataOutputView.writeBoolean(false);
+        }
+        if (deltaPendingFile.schema != null) {
+            dataOutputView.writeBoolean(true);
+            dataOutputView.writeUTF(deltaPendingFile.schema.toJson());
+        } else {
+            dataOutputView.writeBoolean(false);
+        }
+        dataOutputView.writeBoolean(deltaPendingFile.readStats);
+    }
+
 
     public String getFileName() {
         return fileName;
@@ -126,7 +186,7 @@ public class DeltaPendingFile {
      * @param schema Schema of the delta table.
      * @return {@link AddFile} object generated from input
      */
-    public AddFile toAddFile(Path basePath, StructType schema) {
+    public AddFile toAddFile() {
         LinkedHashMap<String, String> partitionSpec = this.getPartitionSpec();
         long modificationTime = this.getLastUpdateTime();
         String filePath = PartitionPathUtils.generatePartitionPath(partitionSpec) +
@@ -171,6 +231,27 @@ public class DeltaPendingFile {
         );
     }
 
+    public static DeltaPendingFile deserializeV2(
+        DataInputView dataInputView,
+        SimpleVersionedSerializer<InProgressFileWriter.PendingFileRecoverable>
+            pendingFileSerializer) throws IOException {
+        DeltaPendingFile pendingFile = deserialize(dataInputView, pendingFileSerializer);
+        Path basePath = null;
+        StructType schema = null;
+        if (dataInputView.readBoolean()) {
+            // has basePath
+            basePath = new Path(dataInputView.readUTF());
+        }
+        if (dataInputView.readBoolean()) {
+            // has schema
+            schema = (StructType) StructType.fromJson(dataInputView.readUTF());
+        }
+        boolean readStats = dataInputView.readBoolean();
+        return new DeltaPendingFile(pendingFile.getPartitionSpec(), basePath,
+            pendingFile.getFileName(), pendingFile.getPendingFile(), pendingFile.getRecordCount(),
+            pendingFile.getFileSize(), pendingFile.getLastUpdateTime(), schema, readStats);
+    }
+
     public static DeltaPendingFile deserialize(
         DataInputView dataInputView,
         SimpleVersionedSerializer<InProgressFileWriter.PendingFileRecoverable>
@@ -211,18 +292,20 @@ public class DeltaPendingFile {
             ")";
     }
 
-    public void computeStats(Path basePath, StructType schema) {
-        String filePath = PartitionPathUtils.generatePartitionPath(partitionSpec) +
-            this.getFileName();
-        try {
-            // Pass absolute path of the parquet file (rootPath + filePath within the root)
-            ParquetFileStats parquetStats = ParquetFileStats.readStats(
-                new Path(basePath, filePath).toString());
-            DeltaFileStats deltaStats = new DeltaFileStats(schema, parquetStats);
-            stats = deltaStats.toJson();
-        } catch (IOException ioe) {
-            // TODO: If we fail computing stats, we should throw and prevent commit.
-            LOG.error("failed computing stats for file " + filePath, ioe);
+    public void onCommit() {
+        if (this.readStats && this.basePath != null && this.schema != null && stats == null) {
+            String filePath = PartitionPathUtils.generatePartitionPath(partitionSpec) +
+                this.getFileName();
+            try {
+                // Pass absolute path of the parquet file (rootPath + filePath within the root)
+                ParquetFileStats parquetStats = ParquetFileStats.readStats(
+                    new Path(basePath, filePath).toString());
+                DeltaFileStats deltaStats = new DeltaFileStats(schema, parquetStats);
+                stats = deltaStats.toJson();
+            } catch (IOException ioe) {
+                // TODO: If we fail computing stats, we should throw and prevent commit.
+                LOG.error("failed computing stats for file " + filePath, ioe);
+            }
         }
     }
 }

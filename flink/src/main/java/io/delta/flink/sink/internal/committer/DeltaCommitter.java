@@ -80,22 +80,9 @@ public class DeltaCommitter implements Committer<DeltaCommittable> {
     ///////////////////////////////////////////////////////////////////////////
 
     private final BucketWriter<?, ?> bucketWriter;
-    private final StructType schema;
-    private final Path basePath;
-    private boolean computeStats = false;
-
-    public DeltaCommitter(BucketWriter<?, ?> bucketWriter, RowType rowType,  Path basePath,
-        boolean computeStats) {
-        this.bucketWriter = checkNotNull(bucketWriter);
-        this.computeStats = computeStats;
-        this.schema = SchemaConverter.toDeltaDataType(rowType);
-        this.basePath = basePath;
-    }
 
     public DeltaCommitter(BucketWriter<?, ?> bucketWriter) {
         this.bucketWriter = checkNotNull(bucketWriter);
-        this.schema = null;
-        this.basePath = null;
     }
 
     /**
@@ -123,9 +110,7 @@ public class DeltaCommitter implements Committer<DeltaCommittable> {
             );
             bucketWriter.recoverPendingFile(committable.getDeltaPendingFile().getPendingFile())
                 .commitAfterRecovery();
-            if (computeStats) {
-                committable.getDeltaPendingFile().computeStats(basePath, schema);
-            }
+            committable.getDeltaPendingFile().onCommit();
         }
         return Collections.emptyList();
     }

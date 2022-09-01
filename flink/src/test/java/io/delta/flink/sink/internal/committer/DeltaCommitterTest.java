@@ -46,7 +46,7 @@ public class DeltaCommitterTest {
     public void testCommitPendingFileWithStats() throws Exception {
         // GIVEN
         StubBucketWriter stubBucketWriter = new StubBucketWriter();
-        DeltaCommitter deltaCommitter = new DeltaCommitter(stubBucketWriter, )
+        DeltaCommitter deltaCommitter = new DeltaCommitter(stubBucketWriter);
     }
 
     @Test

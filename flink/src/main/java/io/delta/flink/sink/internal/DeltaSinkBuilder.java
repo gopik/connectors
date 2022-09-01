@@ -257,7 +257,7 @@ public class DeltaSinkBuilder<IN> implements Serializable {
     }
 
     Committer<DeltaCommittable> createCommitter() throws IOException {
-        return new DeltaCommitter(createBucketWriter(), rowType, tableBasePath, true);
+        return new DeltaCommitter(createBucketWriter());
     }
 
     GlobalCommitter<DeltaCommittable, DeltaGlobalCommittable>
@@ -317,7 +317,8 @@ public class DeltaSinkBuilder<IN> implements Serializable {
             context.metricGroup(),
             bucketCheckInterval,
             appId,
-            nextCheckpointId);
+            nextCheckpointId,
+            rowType);
     }
 
     SimpleVersionedSerializer<DeltaWriterBucketState> getWriterStateSerializer()
