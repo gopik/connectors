@@ -15,9 +15,9 @@ class OptionValidatorTest {
     public void testValidate_missingOption() throws Exception {
         Map<String, DeltaConfigOption<?>> validOptions = new HashMap<>();
         DeltaConnectorConfiguration config = new DeltaConnectorConfiguration();
-        OptionValidator validator = new OptionValidator(config, validOptions);
+        OptionValidator validator = new OptionValidator("", config, validOptions);
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(DeltaOptionValidationException.class, () -> {
             DeltaConfigOption<String> str = validator.validateOptionName("missing_option");
         });
     }
@@ -37,7 +37,7 @@ class OptionValidatorTest {
                     .withDescription("timeout"),
                 Long.class));
 
-        OptionValidator validator = new OptionValidator(config, validOptions);
+        OptionValidator validator = new OptionValidator("tablePath", config, validOptions);
         DeltaConfigOption<Long> opt = validator.validateOptionName("valid_option");
         assertEquals("valid_option", opt.key());
         assertEquals(100L, opt.defaultValue());
@@ -75,7 +75,7 @@ class OptionValidatorTest {
             );
         validOptions.put("bool", boolOption);
 
-        OptionValidator validator = new OptionValidator(config, validOptions);
+        OptionValidator validator = new OptionValidator(null, config, validOptions);
 
         validator.option("string", "string");
         validator.option("int", 20);
@@ -95,7 +95,7 @@ class OptionValidatorTest {
     public void testSetOption_missingOption() throws Exception {
         Map<String, DeltaConfigOption<?>> validOptions = new HashMap<>();
         DeltaConnectorConfiguration config = new DeltaConnectorConfiguration();
-        OptionValidator validator = new OptionValidator(config, validOptions);
+        OptionValidator validator = new OptionValidator("", config, validOptions);
 
         DeltaConfigOption<?> boolOption =
             DeltaConfigOption.of(
@@ -104,10 +104,29 @@ class OptionValidatorTest {
             );
         validOptions.put("bool", boolOption);
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(DeltaOptionValidationException.class, () -> {
             validator.option("string", "'");
         });
 
         assertEquals(new HashSet<>(), config.getUsedOptions());
+    }
+
+    @Test
+    public void testSetOption_incorrectOptionType() throws Exception {
+        Map<String, DeltaConfigOption<?>> validOptions = new HashMap<>();
+        DeltaConnectorConfiguration config = new DeltaConnectorConfiguration();
+        OptionValidator validator = new OptionValidator("", config, validOptions);
+
+        DeltaConfigOption<?> boolOption =
+            DeltaConfigOption.of(
+                ConfigOptions.key("bool").booleanType().defaultValue(false),
+                Boolean.class
+            );
+        validOptions.put("bool", boolOption);
+
+        // Trying to set a string value for a bool option type should throw.
+        assertThrows(DeltaOptionValidationException.class, () -> {
+            validator.option("", "'");
+        });
     }
 }

@@ -1,12 +1,13 @@
 package io.delta.flink.internal.options;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
  * Validator for delta source and sink connector configuration options.
  *
  * Setting of an option is allowed for known option names. For invalid options, the validation
- * throws {@link IllegalArgumentException}.
+ * throws {@link DeltaOptionValidationException}.
  *
  * This is an internal class meant for connector implementations only.
  * Usage example (for sink):
@@ -17,12 +18,15 @@ import java.util.Map;
  * </code>
  */
 public class OptionValidator {
+    private final String tablePath;
     private final Map<String, DeltaConfigOption<?>> validOptions;
     private final DeltaConnectorConfiguration config;
 
     public OptionValidator(
+            String tablePath,
             DeltaConnectorConfiguration config,
             Map<String, DeltaConfigOption<?>> validOptions) {
+        this.tablePath = tablePath;
         this.config = config;
         this.validOptions = validOptions;
     }
@@ -58,18 +62,15 @@ public class OptionValidator {
      * Sets a configuration option.
      */
     public void option(String optionName, long optionValue) {
-        tryToSetOption(() -> {
-            DeltaConfigOption<?> configOption = validateOptionName(optionName);
-            configOption.setOnConfig(config, optionValue);
-        });
+        DeltaConfigOption<?> configOption = validateOptionName(optionName);
+        configOption.setOnConfig(config, optionValue);
     }
 
     private void tryToSetOption(Executable argument) {
         try {
             argument.execute();
         } catch (Exception e) {
-            throw new IllegalArgumentException(e);
-
+            throw optionValidationException(tablePath, e);
         }
     }
 
@@ -77,11 +78,32 @@ public class OptionValidator {
     protected <TYPE> DeltaConfigOption<TYPE> validateOptionName(String optionName) {
         DeltaConfigOption<TYPE> option = (DeltaConfigOption<TYPE>) validOptions.get(optionName);
         if (option == null) {
-            throw new IllegalArgumentException(optionName);
+            throw invalidOptionName(tablePath, optionName);
         }
         return option;
     }
 
+    /** Exception to throw when the option name is invalid. */
+    private static DeltaOptionValidationException invalidOptionName(
+        String tablePath,
+        String invalidOption) {
+
+        return new DeltaOptionValidationException(
+            tablePath,
+            Collections.singletonList(
+                String.format("Invalid option [%s] used for Delta Connector.",
+                    invalidOption)));
+    }
+
+    /** Exception to throw when there's an error while setting an option. */
+    private static DeltaOptionValidationException optionValidationException(
+        String tablePath,
+        Exception e) {
+        return new DeltaOptionValidationException(
+            tablePath,
+            Collections.singletonList(e.getClass() + " - " + e.getMessage())
+        );
+    }
 
     @FunctionalInterface
     private interface Executable {
