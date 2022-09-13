@@ -7,12 +7,14 @@ import java.util.Map;
  * Validator for delta source and sink connector configuration options.
  *
  * Setting of an option is allowed for known option names. For invalid options, the validation
- * throws {@link DeltaOptionValidationException}.
+ * throws {@link DeltaOptionValidationException}. Known option names are passed via constructor
+ * parameter {@param validOptions}.
  *
  * This is an internal class meant for connector implementations only.
  * Usage example (for sink):
  * <code>
  *     OptionValidator validator = new OptionValidator(sinkConfig, validSinkOptions);
+ *     validator.option("mergeSchema", true);
  *     // For any option set on the sink, pass it to validator. If it's successful, sinkConfig
  *     // will be updated with the corresponding option.
  * </code>
@@ -22,6 +24,13 @@ public class OptionValidator {
     private final Map<String, DeltaConfigOption<?>> validOptions;
     private final DeltaConnectorConfiguration config;
 
+    /**
+     * Construct an option validator.
+     *
+     * @param tablePath Base path of the delta table.
+     * @param config Configuration object that is populated with the validated options.
+     * @param validOptions A map of valid options used by this instance.
+     */
     public OptionValidator(
             String tablePath,
             DeltaConnectorConfiguration config,
@@ -31,6 +40,9 @@ public class OptionValidator {
         this.validOptions = validOptions;
     }
 
+    /**
+     * Sets a configuration option.
+     */
     public void option(String optionName, String optionValue) {
         tryToSetOption(() -> {
             DeltaConfigOption<?> configOption = validateOptionName(optionName);

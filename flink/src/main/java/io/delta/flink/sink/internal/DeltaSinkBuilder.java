@@ -156,7 +156,6 @@ public class DeltaSinkBuilder<IN> implements Serializable {
 
     private final OutputFileConfig outputFileConfig;
 
-
     /**
      * Creates instance of the builder for {@link DeltaSink}.
      *

@@ -140,6 +140,9 @@ public class RowDataDeltaSinkBuilder {
     }
 
 
+    /**
+     * Sets a configuration option.
+     */
     public RowDataDeltaSinkBuilder option(String optionName, String optionValue) {
         optionValidator.option(optionName, optionValue);
         return this;
@@ -204,5 +207,4 @@ public class RowDataDeltaSinkBuilder {
             new DeltaPartitionComputer.DeltaRowDataPartitionComputer(rowType, partitionColumns);
         return new DeltaBucketAssigner<>(partitionComputer);
     }
-
 }

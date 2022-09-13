@@ -30,7 +30,7 @@ public class DeltaOptionValidationException extends RuntimeException {
 
         String validationMessages = String.join(System.lineSeparator(), this.validationMessages);
 
-        return "Invalid Delta Source definition detected."
+        return "Invalid Delta connector definition detected."
             + System.lineSeparator()
             + "The reported issues are:"
             + System.lineSeparator()

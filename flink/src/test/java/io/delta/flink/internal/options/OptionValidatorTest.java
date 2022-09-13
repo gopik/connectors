@@ -105,7 +105,7 @@ class OptionValidatorTest {
         validOptions.put("bool", boolOption);
 
         assertThrows(DeltaOptionValidationException.class, () -> {
-            validator.option("string", "'");
+            validator.option("string", "value");
         });
 
         assertEquals(new HashSet<>(), config.getUsedOptions());
@@ -126,7 +126,7 @@ class OptionValidatorTest {
 
         // Trying to set a string value for a bool option type should throw.
         assertThrows(DeltaOptionValidationException.class, () -> {
-            validator.option("", "'");
+            validator.option("", "");
         });
     }
 }
