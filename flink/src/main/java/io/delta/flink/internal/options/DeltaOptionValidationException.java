@@ -3,6 +3,8 @@ package io.delta.flink.internal.options;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.apache.flink.core.fs.Path;
+
 /**
  * Exception throw during validation of Delta connector options.
  */
@@ -19,10 +21,17 @@ public class DeltaOptionValidationException extends RuntimeException {
      */
     private final Collection<String> validationMessages;
 
-    public DeltaOptionValidationException(String tablePath, Collection<String> validationMessages) {
-        this.tablePath = String.valueOf(tablePath);
+    public DeltaOptionValidationException(Path tablePath, Collection<String> validationMessages) {
+        this(String.valueOf(tablePath), validationMessages);
+    }
+
+    public DeltaOptionValidationException(
+            String tablePathString,
+            Collection<String> validationMessages) {
+        this.tablePath = tablePathString;
         this.validationMessages =
             (validationMessages == null) ? Collections.emptyList() : validationMessages;
+
     }
 
     @Override
@@ -36,4 +45,15 @@ public class DeltaOptionValidationException extends RuntimeException {
             + System.lineSeparator()
             + validationMessages;
     }
+
+    /** Table path for this exception. */
+    public String getTablePath() {
+        return tablePath;
+    }
+
+    /** Detailed validation messages for the cause of this exception. */
+    public Collection<String> getValidationMessages() {
+        return Collections.unmodifiableCollection(this.validationMessages);
+    }
+
 }

@@ -3,6 +3,8 @@ package io.delta.flink.internal.options;
 import java.util.Collections;
 import java.util.Map;
 
+import org.apache.flink.core.fs.Path;
+
 /**
  * Validator for delta source and sink connector configuration options.
  *
@@ -20,7 +22,7 @@ import java.util.Map;
  * </code>
  */
 public class OptionValidator {
-    private final String tablePath;
+    private final Path tablePath;
     private final Map<String, DeltaConfigOption<?>> validOptions;
     private final DeltaConnectorConfiguration config;
 
@@ -32,7 +34,7 @@ public class OptionValidator {
      * @param validOptions A map of valid options used by this instance.
      */
     public OptionValidator(
-            String tablePath,
+            Path tablePath,
             DeltaConnectorConfiguration config,
             Map<String, DeltaConfigOption<?>> validOptions) {
         this.tablePath = tablePath;
@@ -74,8 +76,10 @@ public class OptionValidator {
      * Sets a configuration option.
      */
     public void option(String optionName, long optionValue) {
-        DeltaConfigOption<?> configOption = validateOptionName(optionName);
-        configOption.setOnConfig(config, optionValue);
+        tryToSetOption(() -> {
+            DeltaConfigOption<?> configOption = validateOptionName(optionName);
+            configOption.setOnConfig(config, optionValue);
+        });
     }
 
     private void tryToSetOption(Executable argument) {
@@ -97,7 +101,7 @@ public class OptionValidator {
 
     /** Exception to throw when the option name is invalid. */
     private static DeltaOptionValidationException invalidOptionName(
-        String tablePath,
+        Path tablePath,
         String invalidOption) {
 
         return new DeltaOptionValidationException(
@@ -109,7 +113,7 @@ public class OptionValidator {
 
     /** Exception to throw when there's an error while setting an option. */
     private static DeltaOptionValidationException optionValidationException(
-        String tablePath,
+        Path tablePath,
         Exception e) {
         return new DeltaOptionValidationException(
             tablePath,

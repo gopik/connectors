@@ -103,7 +103,7 @@ public class RowDataDeltaSinkBuilder {
         this.conf = conf;
         this.rowType = rowType;
         this.mergeSchema = mergeSchema;
-        this.optionValidator = new OptionValidator(tableBasePath.getPath(),
+        this.optionValidator = new OptionValidator(tableBasePath,
             sinkConfiguration, DeltaSinkOptions.USER_FACING_SINK_OPTIONS);
     }
 

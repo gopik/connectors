@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 
 import org.apache.flink.configuration.ConfigOptions;
+import org.apache.flink.core.fs.Path;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -15,7 +16,7 @@ class OptionValidatorTest {
     public void testValidate_missingOption() throws Exception {
         Map<String, DeltaConfigOption<?>> validOptions = new HashMap<>();
         DeltaConnectorConfiguration config = new DeltaConnectorConfiguration();
-        OptionValidator validator = new OptionValidator("", config, validOptions);
+        OptionValidator validator = new OptionValidator(new Path("/"), config, validOptions);
 
         assertThrows(DeltaOptionValidationException.class, () -> {
             DeltaConfigOption<String> str = validator.validateOptionName("missing_option");
@@ -37,7 +38,8 @@ class OptionValidatorTest {
                     .withDescription("timeout"),
                 Long.class));
 
-        OptionValidator validator = new OptionValidator("tablePath", config, validOptions);
+        OptionValidator validator =
+            new OptionValidator(new Path("tablePath"), config, validOptions);
         DeltaConfigOption<Long> opt = validator.validateOptionName("valid_option");
         assertEquals("valid_option", opt.key());
         assertEquals(100L, opt.defaultValue());
@@ -95,7 +97,7 @@ class OptionValidatorTest {
     public void testSetOption_missingOption() throws Exception {
         Map<String, DeltaConfigOption<?>> validOptions = new HashMap<>();
         DeltaConnectorConfiguration config = new DeltaConnectorConfiguration();
-        OptionValidator validator = new OptionValidator("", config, validOptions);
+        OptionValidator validator = new OptionValidator(new Path("/"), config, validOptions);
 
         DeltaConfigOption<?> boolOption =
             DeltaConfigOption.of(
@@ -115,7 +117,7 @@ class OptionValidatorTest {
     public void testSetOption_incorrectOptionType() throws Exception {
         Map<String, DeltaConfigOption<?>> validOptions = new HashMap<>();
         DeltaConnectorConfiguration config = new DeltaConnectorConfiguration();
-        OptionValidator validator = new OptionValidator("", config, validOptions);
+        OptionValidator validator = new OptionValidator(new Path("/"), config, validOptions);
 
         DeltaConfigOption<?> boolOption =
             DeltaConfigOption.of(
