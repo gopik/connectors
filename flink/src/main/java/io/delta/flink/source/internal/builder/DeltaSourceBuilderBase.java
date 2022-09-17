@@ -78,7 +78,7 @@ public abstract class DeltaSourceBuilderBase<T, SELF> {
     protected final DeltaConnectorConfiguration sourceConfiguration =
         new DeltaConnectorConfiguration();
     /**
-     * Validates sink configuration options.
+     * Validates source configuration options.
      */
     private final OptionValidator optionValidator;
 
