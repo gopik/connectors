@@ -101,9 +101,8 @@ public class OptionValidator {
 
     /** Exception to throw when the option name is invalid. */
     private static DeltaOptionValidationException invalidOptionName(
-        Path tablePath,
-        String invalidOption) {
-
+            Path tablePath,
+            String invalidOption) {
         return new DeltaOptionValidationException(
             tablePath,
             Collections.singletonList(
@@ -113,8 +112,8 @@ public class OptionValidator {
 
     /** Exception to throw when there's an error while setting an option. */
     private static DeltaOptionValidationException optionValidationException(
-        Path tablePath,
-        Exception e) {
+            Path tablePath,
+            Exception e) {
         return new DeltaOptionValidationException(
             tablePath,
             Collections.singletonList(e.getClass() + " - " + e.getMessage())
