@@ -9,7 +9,6 @@ import static java.lang.reflect.Modifier.isStatic;
 import io.delta.flink.internal.options.DeltaConfigOption;
 import org.apache.flink.configuration.ConfigOption;
 import org.junit.jupiter.api.Test;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 
