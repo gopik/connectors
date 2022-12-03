@@ -44,7 +44,7 @@ val sparkVersion = "2.4.3"
 val hiveDeltaVersion = "0.5.0"
 val parquet4sVersion = "1.9.4"
 val scalaTestVersion = "3.0.8"
-val deltaStorageVersion = "1.2.1"
+val deltaStorageVersion = "2.1.0"
 // Versions for Hive 3
 val hadoopVersion = "3.1.0"
 val hiveVersion = "3.1.2"
@@ -377,9 +377,10 @@ lazy val standaloneCosmetic = project
     commonSettings,
     releaseSettings,
     exportJars := true,
-    Compile / packageBin := (standalone / assembly).value,
+    Compile / packageBin := (standaloneParquet / assembly).value,
     libraryDependencies ++= scalaCollectionPar(scalaVersion.value) ++ Seq(
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion % "provided",
+      "org.apache.parquet" % "parquet-hadoop" % "1.12.0" % "provided",
       "io.delta" % "delta-storage" % deltaStorageVersion,
       // parquet4s-core dependencies that are not shaded are added with compile scope.
       "com.chuusai" %% "shapeless" % "2.3.4",
@@ -398,11 +399,56 @@ lazy val testStandaloneCosmetic = project.dependsOn(standaloneCosmetic)
     )
   )
 
+/**
+ * A test project to verify `ParquetSchemaConverter` APIs are working after the user provides
+ * `parquet-hadoop`. We use a separate project because we want to test whether Delta Standlone APIs
+ * except `ParquetSchemaConverter` are working without `parquet-hadoop` in testStandaloneCosmetic`.
+ */
+lazy val testParquetUtilsWithStandaloneCosmetic = project.dependsOn(standaloneCosmetic)
+  .settings(
+    name := "test-parquet-utils-with-standalone-cosmetic",
+    commonSettings,
+    skipReleaseSettings,
+    libraryDependencies ++= Seq(
+      "org.apache.hadoop" % "hadoop-client" % hadoopVersion,
+      "org.apache.parquet" % "parquet-hadoop" % "1.12.0" % "provided",
+      "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
+    )
+  )
+
 def scalaCollectionPar(version: String) = version match {
   case v if v.startsWith("2.13.") =>
     Seq("org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.4")
     case _ => Seq()
 }
+
+/**
+ * The public API ParquetSchemaConverter exposes Parquet classes in its methods so we cannot apply
+ * shading rules on it. However, sbt-assembly doesn't allow excluding a single file. Hence, we
+ * create a separate project to skip the shading.
+ */
+lazy val standaloneParquet = (project in file("standalone-parquet"))
+  .dependsOn(standaloneWithoutParquetUtils)
+  .settings(
+    name := "delta-standalone-parquet",
+    commonSettings,
+    skipReleaseSettings,
+    libraryDependencies ++= Seq(
+      "org.apache.parquet" % "parquet-hadoop" % "1.12.0" % "provided",
+      "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
+    ),
+    assemblyPackageScala / assembleArtifact := false
+  )
+
+/** A dummy project to allow `standaloneParquet` depending on the shaded standalone jar. */
+lazy val standaloneWithoutParquetUtils = project
+  .settings(
+    name := "delta-standalone-without-parquet-utils",
+    commonSettings,
+    skipReleaseSettings,
+    exportJars := true,
+    Compile / packageBin := (standalone / assembly).value
+  )
 
 lazy val standalone = (project in file("standalone"))
   .enablePlugins(GenJavadocPlugin, JavaUnidocPlugin)
@@ -410,7 +456,7 @@ lazy val standalone = (project in file("standalone"))
     name := "delta-standalone-original",
     commonSettings,
     skipReleaseSettings,
-    mimaSettings,
+    mimaSettings, // TODO(scott): move this to standaloneCosmetic
     // When updating any dependency here, we should also review `pomPostProcess` in project
     // `standaloneCosmetic` and update it accordingly.
     libraryDependencies ++= scalaCollectionPar(scalaVersion.value) ++ Seq(
@@ -648,7 +694,7 @@ def flinkScalaVersion(scalaBinaryVersion: String): String = {
   }
 }
 
-val flinkVersion = "1.13.0"
+val flinkVersion = "1.15.3"
 lazy val flink = (project in file("flink"))
   .dependsOn(standaloneCosmetic % "provided")
   .enablePlugins(GenJavadocPlugin, JavaUnidocPlugin)
@@ -679,14 +725,17 @@ lazy val flink = (project in file("flink"))
         </developers>,
     crossPaths := false,
     libraryDependencies ++= Seq(
-      "org.apache.flink" % ("flink-parquet_" + flinkScalaVersion(scalaBinaryVersion.value)) % flinkVersion % "provided",
+      "org.apache.flink" % "flink-parquet" % flinkVersion % "provided",
       "org.apache.flink" % "flink-table-common" % flinkVersion % "provided",
       "org.apache.hadoop" % "hadoop-client" % hadoopVersion % "provided",
+      "org.apache.flink" % "flink-connector-files" % flinkVersion % "provided",
       "org.apache.flink" % "flink-connector-files" % flinkVersion % "test" classifier "tests",
-      "org.apache.flink" % ("flink-table-runtime-blink_" + flinkScalaVersion(scalaBinaryVersion.value)) % flinkVersion % "provided",
+      "org.apache.flink" % "flink-table-runtime" % flinkVersion % "provided",
+      "org.apache.flink" % "flink-scala_2.12" % flinkVersion % "provided",
+      "org.apache.flink" % "flink-runtime-web" % flinkVersion % "test",
       "org.apache.flink" % "flink-connector-test-utils" % flinkVersion % "test",
-      "org.apache.flink" % ("flink-clients_" + flinkScalaVersion(scalaBinaryVersion.value)) % flinkVersion % "test",
-      "org.apache.flink" % ("flink-test-utils_" + flinkScalaVersion(scalaBinaryVersion.value)) % flinkVersion % "test",
+      "org.apache.flink" % "flink-clients" % flinkVersion % "test",
+      "org.apache.flink" % "flink-test-utils" % flinkVersion % "test",
       "org.apache.hadoop" % "hadoop-common" % hadoopVersion % "test" classifier "tests",
       "org.mockito" % "mockito-inline" % "3.8.0" % "test",
       "net.aichler" % "jupiter-interface" % JupiterKeys.jupiterVersion.value % Test,

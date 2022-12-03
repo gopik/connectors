@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.UUID;
 
+import io.delta.flink.internal.options.DeltaConnectorConfiguration;
 import io.delta.flink.sink.DeltaSink;
 import io.delta.flink.sink.internal.committables.DeltaCommittable;
 import io.delta.flink.sink.internal.committables.DeltaCommittableSerializer;
@@ -35,6 +36,7 @@ import io.delta.flink.sink.internal.writer.DeltaWriterBucketStateSerializer;
 import org.apache.flink.api.connector.sink.Committer;
 import org.apache.flink.api.connector.sink.GlobalCommitter;
 import org.apache.flink.api.connector.sink.Sink;
+import org.apache.flink.api.connector.sink.Sink.InitContext;
 import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
@@ -123,6 +125,11 @@ public class DeltaSinkBuilder<IN> implements Serializable {
     private boolean mergeSchema;
 
     /**
+     * Configuration options for delta sink.
+     */
+    private final DeltaConnectorConfiguration sinkConfiguration;
+
+    /**
      * Serializable wrapper for {@link Configuration} object
      */
     private final SerializableConfiguration serializableConfiguration;
@@ -174,7 +181,8 @@ public class DeltaSinkBuilder<IN> implements Serializable {
         BucketAssigner<IN, String> assigner,
         CheckpointRollingPolicy<IN, String> policy,
         RowType rowType,
-        boolean mergeSchema) {
+        boolean mergeSchema,
+        DeltaConnectorConfiguration sinkConfiguration) {
         this(
             basePath,
             conf,
@@ -185,7 +193,8 @@ public class DeltaSinkBuilder<IN> implements Serializable {
             OutputFileConfig.builder().withPartSuffix(".snappy.parquet").build(),
             generateNewAppId(),
             rowType,
-            mergeSchema
+            mergeSchema,
+            sinkConfiguration
         );
     }
 
@@ -226,7 +235,8 @@ public class DeltaSinkBuilder<IN> implements Serializable {
         OutputFileConfig outputFileConfig,
         String appId,
         RowType rowType,
-        boolean mergeSchema) {
+        boolean mergeSchema,
+        DeltaConnectorConfiguration sinkConfiguration) {
         this.tableBasePath = checkNotNull(basePath);
         this.serializableConfiguration = new SerializableConfiguration(checkNotNull(conf));
         this.bucketCheckInterval = bucketCheckInterval;
@@ -237,6 +247,7 @@ public class DeltaSinkBuilder<IN> implements Serializable {
         this.appId = appId;
         this.rowType = rowType;
         this.mergeSchema = mergeSchema;
+        this.sinkConfiguration = sinkConfiguration;
     }
 
     /**
@@ -298,13 +309,15 @@ public class DeltaSinkBuilder<IN> implements Serializable {
      * @return constructed {@link DeltaSink} object
      */
     public DeltaSinkInternal<IN> build() {
-        return new DeltaSinkInternal<IN>(this);
+        return new DeltaSinkInternal<>(this);
     }
 
-    DeltaWriter<IN> createWriter(Sink.InitContext context,
-                                         String appId,
-                                         long nextCheckpointId) throws IOException {
-        return new DeltaWriter<IN>(
+    DeltaWriter<IN> createWriter(
+            InitContext context,
+            String appId,
+            long nextCheckpointId) throws IOException {
+
+        return new DeltaWriter<>(
             tableBasePath,
             bucketAssigner,
             createBucketWriter(),
@@ -357,8 +370,10 @@ public class DeltaSinkBuilder<IN> implements Serializable {
             BucketAssigner<IN, String> assigner,
             CheckpointRollingPolicy<IN, String> policy,
             RowType rowType,
-            boolean mergeSchema) {
-            super(basePath, conf, writerFactory, assigner, policy, rowType, mergeSchema);
+            boolean mergeSchema,
+            DeltaConnectorConfiguration sinkConfiguration) {
+            super(basePath, conf, writerFactory, assigner, policy, rowType, mergeSchema,
+                  sinkConfiguration);
         }
     }
 }

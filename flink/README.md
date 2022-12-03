@@ -13,6 +13,8 @@ Official Delta Lake connector for [Apache Flink](https://flink.apache.org/).
   - [Examples](#delta-sink-examples)
 - [Delta Source](#delta-source)
   - [Modes](#modes)
+    - [Bounded Mode](#bounded-mode)
+    - [Continuous Mode](#continuous-mode)
   - [Examples](#delta-source-examples)
 - [Usage](#usage)
   - [Maven](#maven)
@@ -33,10 +35,11 @@ Flink/Delta Connector includes:
 
 Depending on the version of the connector you can use it with following Apache Flink versions:
   
-| Connector's version | Flink's version |
-|:-------------------:|:---------------:|
-|  0.4.x (Sink Only)  |    1.12.0 <= X <= 1.14.5    |
-|        0.5.x        |    1.13.0 <= X <= 1.14.5    |
+| Connector's version |    Flink's version    |
+|:-------------------:|:---------------------:|
+|  0.4.x (Sink Only)  | 1.12.0 <= X <= 1.14.5 |
+|        0.5.0        | 1.13.0 <= X <= 1.13.6 |
+|   0.5.1-SNAPSHOT    |      X >= 1.15.0      |
 
 ### APIs
 
@@ -44,8 +47,11 @@ See the [Java API docs](https://delta-io.github.io/connectors/latest/delta-flink
 
 ### Known limitations
 
-- The current version only supports Flink `Datastream` API. Support for Flink Table API / SQL, along with Flink Catalog's implementation for storing Delta table's metadata in an external metastore, are planned to be added in the next releases.
-- The current version only provides Delta Lake's transactional guarantees for tables stored on HDFS and Microsoft Azure Storage.
+- The current version only supports Flink `Datastream` API. Support for Flink Table API / SQL, along with Flink Catalog's implementation for storing Delta table's metadata in an external metastore, are planned to be added in a future release.
+- For GCP Object Storage, the current version only supports reading. Writing to GCP Object Storage is not supported. This is due to Flink not supporting recoverable writes to GCS, which was added in Flink [1.15](https://issues.apache.org/jira/browse/FLINK-11838).
+- For Azure Blob Storage, the current version only supports reading. Writing to Azure Blob Storage is not supported by Flink due to [issue](https://issues.apache.org/jira/browse/FLINK-17444) with class shading
+  and will probably be added along with [Azure Data Lake Store Gen 2 support](https://issues.apache.org/jira/browse/FLINK-18568). 
+- For AWS S3 storage, in order to ensure concurrent transactional writes from different clusters, use [multi-cluster configuration guidelines](https://docs.delta.io/latest/delta-storage.html#multi-cluster-setup). Please see [example](#3-sink-creation-with-multi-cluster-support-for-delta-standalone) for how to use this configuration in Flink Delta Sink. 
 
 ## Delta Sink
 
@@ -101,12 +107,6 @@ write data to a partitioned table using one partitioning column `surname`.
 import io.delta.flink.sink.DeltaBucketAssigner;
 import io.delta.flink.sink.DeltaSinkBuilder;
 
-public static final RowType ROW_TYPE = new RowType(Arrays.asList(
-    new RowType.RowField("name", new VarCharType(VarCharType.MAX_LENGTH)),
-    new RowType.RowField("surname", new VarCharType(VarCharType.MAX_LENGTH)),
-    new RowType.RowField("age", new IntType())
-));
-
 public DataStream<RowData> createDeltaSink(
         DataStream<RowData> stream,
         String deltaTablePath) {
@@ -122,17 +122,60 @@ public DataStream<RowData> createDeltaSink(
     return stream;
 }
 ```
+#### 3. Sink creation with multi cluster support for Delta standalone
+In this example we will show how to create `DeltaSink` with [multi-cluster configuration](https://docs.delta.io/latest/delta-storage.html#multi-cluster-setup).
+
+```java
+public DataStream<RowData> createDeltaSink(
+        DataStream<RowData> stream,
+        String deltaTablePath) {
+    String[] partitionCols = { "surname" };
+
+    Configuration configuration = new Configuration();
+    configuration.set("spark.hadoop.fs.s3a.access.key", "USE_YOUR_S3_ACCESS_KEY_HERE");
+    configuration.set("spark.hadoop.fs.s3a.secret.key", "USE_YOUR_S3_SECRET_KEY_HERE");
+    configuration.set("spark.delta.logStore.s3a.impl", "io.delta.storage.S3DynamoDBLogStore");
+    configuration.set("spark.io.delta.storage.S3DynamoDBLogStore.ddb.region", "eu-central-1");
+        
+    DeltaSink<RowData> deltaSink = DeltaSink
+        .forRowData(
+            new Path(deltaTablePath),
+            configuration,
+            rowType)
+        .build();
+    stream.sinkTo(deltaSink);
+    return stream;
+}
+```
 
 ## Delta Source
 
 ### Modes
 
-Delta Source can work in one of two modes:
-- `bounded` - suitable for batch jobs, where we want to read content of Delta table for specific Snapshot version only.
-- `continuous` - suitable for streaming jobs, where we want to read content of Delta table for specific snapshot version and continuously check Delta table for new changes and versions.
+Delta Source can work in one of two modes, described below.
 
-The `DeltaSource` class provides factory methods to create sources for both modes.
-Please see [documentation](https://delta-io.github.io/connectors/latest/delta-flink/api/java/index.html) and examples for details.
+The `DeltaSource` class provides factory methods to create sources for both modes. Please see [documentation](https://delta-io.github.io/connectors/latest/delta-flink/api/java/index.html) and examples for details.
+
+### Bounded Mode
+Suitable for batch jobs, where we want to read content of Delta table for specific table version only. Create a source of this mode using the `DeltaSource.forBoundedRowData` API.
+
+The options relevant to this mode are
+- `versionAsOf` - Loads the state of the Delta table at that version.
+- `timestampAsOf` - Loads the state of the Delta table at the table version written at or before the given timestamp.
+- `columnNames` - Which columns to read. If not provided, the Delta Source source will read all columns.
+
+### Continuous Mode
+Suitable for streaming jobs, where we want to continuously check the Delta table for new changes and versions. Create a source of this mode using the `DeltaSource.forContinuousRowData` API.
+
+Note that by default, the Delta Source will load the full state of the latest Delta table, and then start streaming changes. When you use the `startingTimestamp` or `startingVersion` APIs on the `ContinuousDeltaSourceBuilder`, then the Delta Source will process changes only from that corresponding historical version.
+
+The options relevant to this mode are
+- `startingVersion` - Starts reading changes from this table version.
+- `startingTimestamp` - Starts reading changes from the table version written at or after the given timestamp.
+- `updateCheckIntervalMillis` - The interval, in milliseconds, at which we will check the underlying Delta table for any changes.
+- `ignoreDeletes` - When set to `true`, the Delta Source will be able to process table versions where data is deleted, and skip those deleted records.
+- `ignoreChanges` - When set to `true`, the Delta Source will be able to process table versions where data is changed (i.e. updated), and return those changed records. Note that this can lead to duplicate processing, as some Delta operations, like `UPDATE`, may cause existing rows to be rewritten in new files. Those new files will be treated as new data and be reprocessed. This options subsumes `ignoreDeletes`. Therefore, if you set `ignoreChanges` to `true`, your stream will not be disrupted by either deletions or updates to the source table.
+- `columnNames` - Which columns to read. If not provided, the Delta Source source will read all columns.
 
 #### Table schema discovery
 
@@ -295,12 +338,12 @@ Scala 2.12:
         <dependency>
             <groupId>io.delta</groupId>
             <artifactId>delta-flink</artifactId>
-            <version>0.4.1</version>
+            <version>0.5.0</version>
         </dependency>
         <dependency>
             <groupId>io.delta</groupId>
             <artifactId>delta-standalone_${scala.main.version}</artifactId>
-            <version>0.4.1</version>
+            <version>0.5.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
@@ -325,7 +368,7 @@ Scala 2.12:
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-table-runtime-blink_${scala.main.version}</artifactId>
+            <artifactId>flink-table-runtime_${scala.main.version}</artifactId>
             <version>${flink-version}</version>
             <scope>provided</scope>
         </dependency>
@@ -339,8 +382,8 @@ Please replace the versions of the dependencies with the ones you are using.
 
 ```scala
 libraryDependencies ++= Seq(
-  "io.delta" %% "delta-flink" % "0.4.1",
-  "io.delta" %% "delta-standalone" % "0.4.1",  
+  "io.delta" %% "delta-flink" % deltaConnectorsVersion,
+  "io.delta" %% "delta-standalone" % deltaConnectorsVersion,
   "org.apache.flink" %% "flink-clients" % flinkVersion,
   "org.apache.flink" %% "flink-parquet" % flinkVersion,
   "org.apache.hadoop" % "hadoop-client" % hadoopVersion,
@@ -364,11 +407,6 @@ The project is compiled using [SBT](https://www.scala-sbt.org/1.x/docs/Command-L
 - To publish the JAR, run `build/sbt flink/publishM2`
 
 ## Frequently asked questions (FAQ)
-
-#### Can I use this connector to read data from a Delta table?
-
-No, currently we are supporting only writing to a Delta table. A `DeltaSource` API with the support for reading data from
-Delta tables will be added in future releases.
 
 #### Can I use this connector to append data to a Delta table?
 
