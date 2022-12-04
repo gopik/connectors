@@ -6,7 +6,7 @@ import java.util.Set;
 import static java.lang.reflect.Modifier.isPublic;
 import static java.lang.reflect.Modifier.isStatic;
 
-import io.delta.flink.source.internal.builder.DeltaConfigOption;
+import io.delta.flink.internal.options.DeltaConfigOption;
 import org.apache.flink.configuration.ConfigOption;
 import org.junit.Test;
 import static org.hamcrest.MatcherAssert.assertThat;

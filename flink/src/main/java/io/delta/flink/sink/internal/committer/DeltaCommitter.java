@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
+// TODO PR Flink 1.15 verify javadoc below.
 /**
  * Committer implementation for {@link DeltaSink}.
  *
@@ -41,7 +42,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  *
  * <p> This class behaves almost in the same way as its equivalent
  * {@link org.apache.flink.connector.file.sink.committer.FileCommitter}
- * in the {@link FileSink}. The only differences are:
+ * in the {@link org.apache.flink.connector.file.sink.FileSink}. The only differences are:
  *
  * <ol>
  *   <li>use of the {@link DeltaCommittable} instead of
@@ -51,7 +52,8 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  *       file's state (as opposite to
  *       {@link org.apache.flink.connector.file.sink.committer.FileCommitter#commit}
  *       because in {@link DeltaWriter#prepareCommit} we always roll all of the in-progress files.
- *       Valid note here is that's also the default {@link FileSink}'s behaviour for all of the
+ *       Valid note here is that's also the default
+ *       {@link org.apache.flink.connector.file.sink.FileSink}'s behaviour for all of the
  *       bulk formats (Parquet included).</li>
  * </ol>
  * <p>
@@ -97,8 +99,7 @@ public class DeltaCommitter implements Committer<DeltaCommittable> {
      * @throws IOException if committing files (e.g. I/O errors occurs)
      */
     @Override
-    public List<DeltaCommittable> commit(
-        List<DeltaCommittable> committables) throws IOException {
+    public List<DeltaCommittable> commit(List<DeltaCommittable> committables) throws IOException {
         for (DeltaCommittable committable : committables) {
             LOG.info("Committing delta committable locally: " +
                 "appId=" + committable.getAppId() +
