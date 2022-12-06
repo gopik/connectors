@@ -186,7 +186,6 @@ public class DeltaWriter<IN> implements SinkWriter<IN, DeltaCommittable, DeltaWr
      * @param nextCheckpointId      Identifier of the next checkpoint interval to be committed.
      *                              During DeltaLog's commit phase it will be used as transaction's
      *                              version.
-     * @param rowType
      */
     public DeltaWriter(
         final Path basePath,
@@ -404,8 +403,8 @@ public class DeltaWriter<IN> implements SinkWriter<IN, DeltaCommittable, DeltaWr
                 bucketWriter,
                 rollingPolicy,
                 outputFileConfig,
-                metricGroup,
-                rowType);
+                metricGroup
+            );
 
             activeBuckets.put(bucketId, bucket);
         }

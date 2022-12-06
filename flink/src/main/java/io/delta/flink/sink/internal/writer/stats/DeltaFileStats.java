@@ -12,10 +12,6 @@ import org.apache.parquet.hadoop.metadata.ColumnPath;
 import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.Type;
 
-import io.delta.standalone.types.StructType;
-import io.delta.standalone.util.ParquetSchemaConverter;
-
-
 /**
  * Converts Parquet stats to delta json format.
  * <p>
@@ -75,8 +71,8 @@ public class DeltaFileStats {
     private final JsonFileStats.JsonStatFactory statFactory;
     private final MessageType messageType;
 
-    public DeltaFileStats(StructType schema, ParquetFileStats stats) {
-        this.messageType = ParquetSchemaConverter.deltaToParquet(schema);
+    public DeltaFileStats(ParquetFileStats stats) {
+        this.messageType = stats.getSchema();
         this.stats = stats;
         this.objectMapper = new ObjectMapper();
         this.statFactory = new JsonFileStats.JsonStatFactory(objectMapper);

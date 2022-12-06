@@ -26,7 +26,6 @@ import java.util.Objects;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
-import io.delta.flink.sink.internal.SchemaConverter;
 import io.delta.flink.sink.internal.committables.DeltaCommittable;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.metrics.Counter;
@@ -106,7 +105,6 @@ public class DeltaWriterBucket<IN> {
     private final Path bucketPath;
 
     private final OutputFileConfig outputFileConfig;
-    private RowType rowType;
 
     private final String uniqueId;
 
@@ -144,14 +142,12 @@ public class DeltaWriterBucket<IN> {
         DeltaBulkBucketWriter<IN, String> bucketWriter,
         CheckpointRollingPolicy<IN, String> rollingPolicy,
         OutputFileConfig outputFileConfig,
-        MetricGroup metricGroup,
-        RowType rowType) {
+        MetricGroup metricGroup) {
         this.bucketId = checkNotNull(bucketId);
         this.bucketPath = checkNotNull(bucketPath);
         this.bucketWriter = checkNotNull(bucketWriter);
         this.rollingPolicy = checkNotNull(rollingPolicy);
         this.outputFileConfig = checkNotNull(outputFileConfig);
-        this.rowType = rowType;
 
         this.partitionSpec = PartitionPathUtils.extractPartitionSpecFromPath(this.bucketPath);
         this.uniqueId = UUID.randomUUID().toString();
@@ -170,8 +166,7 @@ public class DeltaWriterBucket<IN> {
         CheckpointRollingPolicy<IN, String> rollingPolicy,
         DeltaWriterBucketState bucketState,
         OutputFileConfig outputFileConfig,
-        MetricGroup metricGroup,
-        RowType rowType) {
+        MetricGroup metricGroup) {
 
         this(
             bucketState.getBucketId(),
@@ -179,8 +174,8 @@ public class DeltaWriterBucket<IN> {
             partFileFactory,
             rollingPolicy,
             outputFileConfig,
-            metricGroup,
-            rowType);
+            metricGroup
+        );
     }
 
     /**
@@ -324,7 +319,6 @@ public class DeltaWriterBucket<IN> {
                 this.inProgressPartRecordCount,
                 fileSize,
                 deltaInProgressPart.getBulkPartWriter().getLastUpdateTime(),
-                SchemaConverter.toDeltaDataType(rowType),
                 false // readStats
             );
             pendingFiles.add(pendingFile);
@@ -452,10 +446,10 @@ public class DeltaWriterBucket<IN> {
             final DeltaBulkBucketWriter<IN, String> bucketWriter,
             final CheckpointRollingPolicy<IN, String> rollingPolicy,
             final OutputFileConfig outputFileConfig,
-            final MetricGroup metricGroup, RowType rowType) {
+            final MetricGroup metricGroup) {
             return new DeltaWriterBucket<>(
                 bucketId,
-                bucketPath, bucketWriter, rollingPolicy, outputFileConfig, metricGroup, rowType);
+                bucketPath, bucketWriter, rollingPolicy, outputFileConfig, metricGroup);
         }
 
         static <IN> DeltaWriterBucket<IN> restoreBucket(
@@ -465,7 +459,7 @@ public class DeltaWriterBucket<IN> {
             final OutputFileConfig outputFileConfig,
             final MetricGroup metricGroup, RowType rowType) {
             return new DeltaWriterBucket<>(
-                bucketWriter, rollingPolicy, bucketState, outputFileConfig, metricGroup, rowType);
+                bucketWriter, rollingPolicy, bucketState, outputFileConfig, metricGroup);
         }
     }
 }

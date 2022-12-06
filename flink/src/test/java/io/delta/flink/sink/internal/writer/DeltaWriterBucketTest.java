@@ -244,8 +244,8 @@ public class DeltaWriterBucketTest {
             DeltaSinkTestUtils.createBucketWriter(bucketPath),
             rollingPolicy,
             OutputFileConfig.builder().withPartSuffix(".snappy.parquet").build(),
-            metricGroupMock,
-            DeltaSinkTestUtils.TEST_ROW_TYPE);
+            metricGroupMock
+        );
     }
 
     private DeltaWriterBucket<RowData> getBucketWriter(Path bucketPath) throws IOException {

@@ -28,7 +28,7 @@ public class DeltaFileStatsTest {
             .add(new StructField("f1", new BinaryType()))
             .add(new StructField("f2", new StringType()))
             .add(new StructField("f3", new IntegerType()));
-        DeltaFileStats deltaStats = new DeltaFileStats(schema, stats);
+        DeltaFileStats deltaStats = new DeltaFileStats(stats);
         String json = deltaStats.toJson();
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode root = objectMapper.readTree(objectMapper.readTree(json).asText());
@@ -61,7 +61,7 @@ public class DeltaFileStatsTest {
             .add(new StructField("f2", new StringType()))
             .add(new StructField("f3", new IntegerType()))
             .add(new StructField("unknown", new IntegerType()));
-        DeltaFileStats deltaStats = new DeltaFileStats(schema, stats);
+        DeltaFileStats deltaStats = new DeltaFileStats(stats);
         String json = deltaStats.toJson();
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode root = objectMapper.readTree(objectMapper.readTree(json).asText());

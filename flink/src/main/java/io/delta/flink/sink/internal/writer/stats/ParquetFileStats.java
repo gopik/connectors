@@ -26,9 +26,11 @@ public class ParquetFileStats {
 
 
     private final Map<ColumnPath, Statistics<?>> columnStats;
+    private final ParquetMetadata parquetMetadata;
     private long rowCount;
 
     private ParquetFileStats(ParquetMetadata parquetMetadata) {
+        this.parquetMetadata = parquetMetadata;
         this.columnStats = load(parquetMetadata);
     }
 
@@ -58,6 +60,10 @@ public class ParquetFileStats {
 
     public long getRowCount() {
         return rowCount;
+    }
+
+    public MessageType getSchema() {
+        return parquetMetadata.getFileMetaData().getSchema();
     }
 
     /** Iterates over row group metadata and merge column stats from different row groups. */

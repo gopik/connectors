@@ -172,7 +172,7 @@ public class DeltaCommitterTest {
             String fileName, PendingFileRecoverable pendingFile, long recordCount, long fileSize,
             long lastUpdateTime, StructType schema, boolean readStats) {
             super(partitionSpec, basePath, fileName, pendingFile, recordCount, fileSize,
-                lastUpdateTime, schema, readStats);
+                lastUpdateTime, readStats);
         }
 
         @Override

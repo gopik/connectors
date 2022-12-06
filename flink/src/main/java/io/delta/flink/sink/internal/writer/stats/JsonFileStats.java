@@ -18,13 +18,10 @@ public class JsonFileStats {
      * {@link DataType}.
      */
     static class JsonStatFactory {
-
         private final ObjectMapper objectMapper;
-
         JsonStatFactory(ObjectMapper objectMapper) {
             this.objectMapper = objectMapper;
         }
-
         public JsonStat newJsonStat(Statistics<?> stat) {
             if (stat == null) {
                 return new JsonStatNoop(objectMapper, null);
