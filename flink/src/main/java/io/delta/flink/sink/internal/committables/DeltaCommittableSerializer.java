@@ -80,7 +80,7 @@ public class DeltaCommittableSerializer
         String appId = dataInputView.readUTF();
         long checkpointId = dataInputView.readLong();
         DeltaPendingFile deltaPendingFile =
-            DeltaPendingFile.deserializeV2(dataInputView, pendingFileSerializer);
+            DeltaPendingFile.deserialize(dataInputView, pendingFileSerializer);
         return new DeltaCommittable(deltaPendingFile, appId, checkpointId);
     }
 
@@ -96,7 +96,7 @@ public class DeltaCommittableSerializer
         throws IOException {
         dataOutputView.writeUTF(committable.getAppId());
         dataOutputView.writeLong(committable.getCheckpointId());
-        DeltaPendingFile.serializeV2(
+        DeltaPendingFile.serialize(
             committable.getDeltaPendingFile(), dataOutputView, pendingFileSerializer);
     }
 

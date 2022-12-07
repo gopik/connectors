@@ -313,14 +313,11 @@ public class DeltaWriterBucket<IN> {
 
             DeltaPendingFile pendingFile = new DeltaPendingFile(
                 partitionSpec,
-                bucketPath,
                 deltaInProgressPart.getFileName(),
                 pendingFileRecoverable,
                 this.inProgressPartRecordCount,
                 fileSize,
-                deltaInProgressPart.getBulkPartWriter().getLastUpdateTime(),
-                false // readStats
-            );
+                deltaInProgressPart.getBulkPartWriter().getLastUpdateTime());
             pendingFiles.add(pendingFile);
             deltaInProgressPart = null;
             inProgressPartRecordCount = 0;

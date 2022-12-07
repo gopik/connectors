@@ -31,7 +31,6 @@ import org.apache.flink.core.io.SimpleVersionedSerialization;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.core.memory.DataInputView;
 import org.apache.flink.core.memory.DataOutputView;
-import org.apache.flink.streaming.api.functions.sink.filesystem.InProgressFileWriter.PendingFileRecoverable;
 import org.apache.flink.table.utils.PartitionPathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,9 +79,6 @@ public class DeltaPendingFile {
 
     private String stats;
 
-    // Whether to read stats as part of creating delta log actions
-    private final boolean readStats;
-
     public DeltaPendingFile(LinkedHashMap<String, String> partitionSpec,
                             String fileName,
                             InProgressFileWriter.PendingFileRecoverable pendingFile,
@@ -113,21 +109,8 @@ public class DeltaPendingFile {
         this.fileSize = fileSize;
         this.recordCount = recordCount;
         this.lastUpdateTime = lastUpdateTime;
-        this.readStats = readStats;
         this.stats = null;
     }
-
-
-    public static void serializeV2(
-        DeltaPendingFile deltaPendingFile,
-        DataOutputView dataOutputView,
-        SimpleVersionedSerializer<PendingFileRecoverable> pendingFileSerializer)
-        throws IOException {
-
-        serialize(deltaPendingFile, dataOutputView, pendingFileSerializer);
-        dataOutputView.writeBoolean(deltaPendingFile.readStats);
-    }
-
 
     public String getFileName() {
         return fileName;
@@ -203,17 +186,6 @@ public class DeltaPendingFile {
         );
     }
 
-    public static DeltaPendingFile deserializeV2(
-        DataInputView dataInputView,
-        SimpleVersionedSerializer<InProgressFileWriter.PendingFileRecoverable>
-            pendingFileSerializer) throws IOException {
-        DeltaPendingFile pendingFile = deserialize(dataInputView, pendingFileSerializer);
-        boolean readStats = dataInputView.readBoolean();
-        return new DeltaPendingFile(pendingFile.getPartitionSpec(),
-            pendingFile.getFileName(), pendingFile.getPendingFile(), pendingFile.getRecordCount(),
-            pendingFile.getFileSize(), pendingFile.getLastUpdateTime(), readStats);
-    }
-
     public static DeltaPendingFile deserialize(
         DataInputView dataInputView,
         SimpleVersionedSerializer<InProgressFileWriter.PendingFileRecoverable>
@@ -255,7 +227,7 @@ public class DeltaPendingFile {
     }
 
     public void onCommit() {
-        if (this.readStats && stats == null) {
+        if (stats == null) {
             String filePath = PartitionPathUtils.generatePartitionPath(partitionSpec) +
                 this.getFileName();
             try {

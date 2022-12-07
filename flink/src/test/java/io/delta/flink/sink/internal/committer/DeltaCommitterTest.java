@@ -171,7 +171,7 @@ public class DeltaCommitterTest {
         RecordingDeltaPendingFile(LinkedHashMap<String, String> partitionSpec, Path basePath,
             String fileName, PendingFileRecoverable pendingFile, long recordCount, long fileSize,
             long lastUpdateTime, StructType schema, boolean readStats) {
-            super(partitionSpec, basePath, fileName, pendingFile, recordCount, fileSize,
+            super(partitionSpec, fileName, pendingFile, recordCount, fileSize,
                 lastUpdateTime, readStats);
         }
 

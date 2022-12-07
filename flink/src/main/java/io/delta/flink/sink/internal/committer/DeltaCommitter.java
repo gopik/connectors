@@ -79,8 +79,16 @@ public class DeltaCommitter implements Committer<DeltaCommittable> {
 
     private final BucketWriter<?, ?> bucketWriter;
 
+    // If true, file level delta stats will be computed when a pending file is committed.
+    private final boolean computeDeltaStats;
+
     public DeltaCommitter(BucketWriter<?, ?> bucketWriter) {
+        this(bucketWriter, false);
+    }
+
+    public DeltaCommitter(BucketWriter<?, ?> bucketWriter, boolean computeDeltaStats) {
         this.bucketWriter = checkNotNull(bucketWriter);
+        this.computeDeltaStats = computeDeltaStats;
     }
 
     /**
@@ -107,7 +115,9 @@ public class DeltaCommitter implements Committer<DeltaCommittable> {
             );
             bucketWriter.recoverPendingFile(committable.getDeltaPendingFile().getPendingFile())
                 .commitAfterRecovery();
-            committable.getDeltaPendingFile().onCommit();
+            if (computeDeltaStats) {
+                committable.getDeltaPendingFile().onCommit();
+            }
         }
         return Collections.emptyList();
     }
