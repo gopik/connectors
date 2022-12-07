@@ -328,8 +328,7 @@ public class DeltaSinkBuilder<IN> implements Serializable {
             context.metricGroup(),
             bucketCheckInterval,
             appId,
-            nextCheckpointId,
-            rowType);
+            nextCheckpointId);
     }
 
     SimpleVersionedSerializer<DeltaWriterBucketState> getWriterStateSerializer()

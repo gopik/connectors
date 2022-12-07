@@ -51,14 +51,14 @@ public class DeltaCommittableSerializer
 
     @Override
     public int getVersion() {
-        return 2;
+        return 1;
     }
 
     @Override
     public byte[] serialize(DeltaCommittable committable) throws IOException {
         DataOutputSerializer out = new DataOutputSerializer(256);
         out.writeInt(MAGIC_NUMBER);
-        serializeV2(committable, out);
+        serializeV1(committable, out);
         return out.getCopyOfBuffer();
     }
 
@@ -69,30 +69,11 @@ public class DeltaCommittableSerializer
         if (version == 1) {
             validateMagicNumber(in);
             return deserializeV1(in);
-        } else if (version == 2) {
-            validateMagicNumber(in);
-            return deserializeV2(in);
         }
         throw new IOException("Unrecognized version or corrupt state: " + version);
     }
 
-    private DeltaCommittable deserializeV2(DataInputView dataInputView) throws IOException {
-        String appId = dataInputView.readUTF();
-        long checkpointId = dataInputView.readLong();
-        DeltaPendingFile deltaPendingFile =
-            DeltaPendingFile.deserialize(dataInputView, pendingFileSerializer);
-        return new DeltaCommittable(deltaPendingFile, appId, checkpointId);
-    }
-
     void serializeV1(DeltaCommittable committable, DataOutputView dataOutputView)
-        throws IOException {
-        dataOutputView.writeUTF(committable.getAppId());
-        dataOutputView.writeLong(committable.getCheckpointId());
-        DeltaPendingFile.serialize(
-            committable.getDeltaPendingFile(), dataOutputView, pendingFileSerializer);
-    }
-
-    void serializeV2(DeltaCommittable committable, DataOutputView dataOutputView)
         throws IOException {
         dataOutputView.writeUTF(committable.getAppId());
         dataOutputView.writeLong(committable.getCheckpointId());

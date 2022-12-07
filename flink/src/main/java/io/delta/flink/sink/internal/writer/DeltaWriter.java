@@ -30,7 +30,6 @@ import io.delta.flink.sink.internal.DeltaBucketAssigner;
 import io.delta.flink.sink.internal.committables.DeltaCommittable;
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.connector.sink.Sink;
-import org.apache.flink.api.connector.sink.Sink.ProcessingTimeService;
 import org.apache.flink.api.connector.sink.SinkWriter;
 import org.apache.flink.connector.file.sink.writer.FileWriter;
 import org.apache.flink.core.fs.Path;
@@ -40,7 +39,6 @@ import org.apache.flink.streaming.api.functions.sink.filesystem.BucketAssigner;
 import org.apache.flink.streaming.api.functions.sink.filesystem.DeltaBulkBucketWriter;
 import org.apache.flink.streaming.api.functions.sink.filesystem.OutputFileConfig;
 import org.apache.flink.streaming.api.functions.sink.filesystem.rollingpolicies.CheckpointRollingPolicy;
-import org.apache.flink.table.types.logical.RowType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static org.apache.flink.util.Preconditions.checkArgument;
@@ -143,7 +141,6 @@ public class DeltaWriter<IN> implements SinkWriter<IN, DeltaCommittable, DeltaWr
     private final BucketerContext bucketerContext;
 
     private final OutputFileConfig outputFileConfig;
-    private RowType rowType;
 
     ///////////////////////////////////////////////////
     // metrics
@@ -166,26 +163,27 @@ public class DeltaWriter<IN> implements SinkWriter<IN, DeltaCommittable, DeltaWr
      *
      * @param basePath              The base path for the table
      * @param bucketAssigner        The {@link BucketAssigner} provided by the user. It is advised
-     *                              to use {@link DeltaBucketAssigner} however users are allowed to
-     *                              use any custom implementation of bucketAssigner. The only
-     *                              requirement for correctness is to follow DeltaLake's style of
-     *                              table partitioning.
+     *                              to use {@link DeltaBucketAssigner} however users are
+     *                              allowed to use any custom implementation of bucketAssigner. The
+     *                              only requirement for correctness is to follow DeltaLake's style
+     *                              of table partitioning.
      * @param bucketWriter          The {@link DeltaBulkBucketWriter} to be used when writing data.
      * @param rollingPolicy         The {@link CheckpointRollingPolicy} as specified by the user.
      * @param outputFileConfig      The {@link OutputFileConfig} to configure the options for output
      *                              files.
-     * @param processingTimeService The {@link ProcessingTimeService} that allows to get the current
-     *                              processing time and register timers that will execute the given
-     *                              Sink.ProcessingTimeService.ProcessingTimeCallback when firing.
+     * @param processingTimeService The {@link Sink.ProcessingTimeService} that allows to get the
+     *                              current processing time and register timers that will execute
+     *                              the given Sink.ProcessingTimeService.ProcessingTimeCallback when
+     *                              firing.
      * @param metricGroup           metric group object for the current Sink
-     * @param bucketCheckInterval   interval for invoking the {@link ProcessingTimeService}'s
+     * @param bucketCheckInterval   interval for invoking the {@link Sink.ProcessingTimeService}'s
      *                              callback.
      * @param appId                 Unique identifier of the current Flink app. This identifier
      *                              needs to be constant across all app's restarts to guarantee
      *                              idempotent writes/commits to the DeltaLake's table.
      * @param nextCheckpointId      Identifier of the next checkpoint interval to be committed.
-     *                              During DeltaLog's commit phase it will be used as transaction's
-     *                              version.
+     *                              During DeltaLog's commit phase it will be used to group
+     *                              committable objects.
      */
     public DeltaWriter(
         final Path basePath,
@@ -193,12 +191,11 @@ public class DeltaWriter<IN> implements SinkWriter<IN, DeltaCommittable, DeltaWr
         final DeltaBulkBucketWriter<IN, String> bucketWriter,
         final CheckpointRollingPolicy<IN, String> rollingPolicy,
         final OutputFileConfig outputFileConfig,
-        final ProcessingTimeService processingTimeService,
+        final Sink.ProcessingTimeService processingTimeService,
         final MetricGroup metricGroup,
         final long bucketCheckInterval,
         final String appId,
-        final long nextCheckpointId,
-        RowType rowType) {
+        final long nextCheckpointId) {
 
         this.basePath = checkNotNull(basePath);
         this.bucketAssigner = checkNotNull(bucketAssigner);
@@ -221,7 +218,6 @@ public class DeltaWriter<IN> implements SinkWriter<IN, DeltaCommittable, DeltaWr
         this.bucketCheckInterval = bucketCheckInterval;
         this.appId = appId;
         this.nextCheckpointId = nextCheckpointId;
-        this.rowType = rowType;
     }
 
     /**
@@ -357,7 +353,7 @@ public class DeltaWriter<IN> implements SinkWriter<IN, DeltaCommittable, DeltaWr
 
             DeltaWriterBucket<IN> restoredBucket =
                 DeltaWriterBucket.DeltaWriterBucketFactory.restoreBucket(
-                    bucketWriter, rollingPolicy, state, outputFileConfig, metricGroup, rowType);
+                    bucketWriter, rollingPolicy, state, outputFileConfig, metricGroup);
 
             updateActiveBucketId(bucketId, restoredBucket);
         }
@@ -403,8 +399,7 @@ public class DeltaWriter<IN> implements SinkWriter<IN, DeltaCommittable, DeltaWr
                 bucketWriter,
                 rollingPolicy,
                 outputFileConfig,
-                metricGroup
-            );
+                metricGroup);
 
             activeBuckets.put(bucketId, bucket);
         }

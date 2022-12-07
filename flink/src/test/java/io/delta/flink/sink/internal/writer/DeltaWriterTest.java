@@ -301,8 +301,8 @@ public class DeltaWriterTest {
             metricGroup,
             10,
             APP_ID,
-            1,
-            DeltaSinkTestUtils.TEST_ROW_TYPE);
+            1
+        );
     }
 
     /**

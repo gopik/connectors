@@ -77,6 +77,7 @@ public class DeltaPendingFile {
 
     private final long lastUpdateTime;
 
+    // Stringified json of file level stats for this file in delta stats format.
     private String stats;
 
     public DeltaPendingFile(LinkedHashMap<String, String> partitionSpec,
@@ -85,7 +86,6 @@ public class DeltaPendingFile {
                             long recordCount,
                             long fileSize,
                             long lastUpdateTime) {
-
         this.partitionSpec = partitionSpec;
         this.fileName = fileName;
         this.pendingFile = pendingFile;
@@ -209,6 +209,9 @@ public class DeltaPendingFile {
             ")";
     }
 
+    /**
+     * Computes file level delta stats from the committed parquet file.
+     */
     public void computeDeltaStats() {
         if (stats == null && pendingFile.getPath() != null) {
             String filePath = PartitionPathUtils.generatePartitionPath(partitionSpec) +

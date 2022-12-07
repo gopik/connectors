@@ -37,7 +37,6 @@ import org.apache.flink.streaming.api.functions.sink.filesystem.DeltaPendingFile
 import org.apache.flink.streaming.api.functions.sink.filesystem.InProgressFileWriter;
 import org.apache.flink.streaming.api.functions.sink.filesystem.OutputFileConfig;
 import org.apache.flink.streaming.api.functions.sink.filesystem.rollingpolicies.CheckpointRollingPolicy;
-import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.table.utils.PartitionPathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -174,8 +173,7 @@ public class DeltaWriterBucket<IN> {
             partFileFactory,
             rollingPolicy,
             outputFileConfig,
-            metricGroup
-        );
+            metricGroup);
     }
 
     /**
@@ -317,7 +315,8 @@ public class DeltaWriterBucket<IN> {
                 pendingFileRecoverable,
                 this.inProgressPartRecordCount,
                 fileSize,
-                deltaInProgressPart.getBulkPartWriter().getLastUpdateTime());
+                deltaInProgressPart.getBulkPartWriter().getLastUpdateTime()
+            );
             pendingFiles.add(pendingFile);
             deltaInProgressPart = null;
             inProgressPartRecordCount = 0;
@@ -445,8 +444,7 @@ public class DeltaWriterBucket<IN> {
             final OutputFileConfig outputFileConfig,
             final MetricGroup metricGroup) {
             return new DeltaWriterBucket<>(
-                bucketId,
-                bucketPath, bucketWriter, rollingPolicy, outputFileConfig, metricGroup);
+                bucketId, bucketPath, bucketWriter, rollingPolicy, outputFileConfig, metricGroup);
         }
 
         static <IN> DeltaWriterBucket<IN> restoreBucket(
@@ -454,7 +452,7 @@ public class DeltaWriterBucket<IN> {
             final CheckpointRollingPolicy<IN, String> rollingPolicy,
             final DeltaWriterBucketState bucketState,
             final OutputFileConfig outputFileConfig,
-            final MetricGroup metricGroup, RowType rowType) {
+            final MetricGroup metricGroup) {
             return new DeltaWriterBucket<>(
                 bucketWriter, rollingPolicy, bucketState, outputFileConfig, metricGroup);
         }
