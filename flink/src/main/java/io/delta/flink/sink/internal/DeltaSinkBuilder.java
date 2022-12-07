@@ -267,7 +267,8 @@ public class DeltaSinkBuilder<IN> implements Serializable {
     }
 
     Committer<DeltaCommittable> createCommitter() throws IOException {
-        return new DeltaCommitter(createBucketWriter());
+        return new DeltaCommitter(createBucketWriter(),
+                sinkConfiguration.getValue(DeltaSinkOptions.COMPUTE_DELTA_STATS));
     }
 
     GlobalCommitter<DeltaCommittable, DeltaGlobalCommittable>

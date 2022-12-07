@@ -164,7 +164,7 @@ public class DeltaCommitterTest {
         }
 
         @Override
-        public void onCommit() {
+        public void computeDeltaStats() {
             committed = true;
         }
 

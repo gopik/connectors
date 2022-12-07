@@ -209,7 +209,7 @@ public class DeltaPendingFile {
             ")";
     }
 
-    public void onCommit() {
+    public void computeDeltaStats() {
         if (stats == null && pendingFile.getPath() != null) {
             String filePath = PartitionPathUtils.generatePartitionPath(partitionSpec) +
                 this.getFileName();
