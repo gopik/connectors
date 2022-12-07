@@ -30,7 +30,6 @@ import io.delta.flink.sink.internal.committables.DeltaCommittableSerializer;
 import io.delta.flink.sink.utils.DeltaSinkTestUtils;
 import org.apache.flink.connector.file.sink.utils.FileSinkTestUtils;
 import org.apache.flink.connector.file.sink.utils.NoOpBucketWriter;
-import org.apache.flink.core.fs.Path;
 import org.apache.flink.streaming.api.functions.sink.filesystem.BucketWriter;
 import org.apache.flink.streaming.api.functions.sink.filesystem.DeltaPendingFile;
 import org.apache.flink.streaming.api.functions.sink.filesystem.InProgressFileWriter;
@@ -38,8 +37,6 @@ import org.apache.flink.streaming.api.functions.sink.filesystem.InProgressFileWr
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-
-import io.delta.standalone.types.StructType;
 
 /**
  * Tests for {@link DeltaCommitter}.
@@ -52,20 +49,18 @@ public class DeltaCommitterTest {
     public void testCommitPendingFileWithStats() throws Exception {
         // GIVEN
         StubBucketWriter stubBucketWriter = new StubBucketWriter();
-        DeltaCommitter deltaCommitter = new DeltaCommitter(stubBucketWriter);
+        DeltaCommitter deltaCommitter = new DeltaCommitter(stubBucketWriter, true);
 
         // WHEN
         RecordingDeltaPendingFile pendingFile =
             new RecordingDeltaPendingFile(
                 new LinkedHashMap<>(),
-                new Path("/"),
                 "",
                 new FileSinkTestUtils.TestPendingFileRecoverable(),
                 0,
                 0,
-                0,
-                new StructType(),
-                false);
+                0
+            );
         DeltaCommittable deltaCommittable = new DeltaCommittable(
             pendingFile,
             "1",
@@ -83,7 +78,7 @@ public class DeltaCommitterTest {
     public void testCommitPendingFile() throws Exception {
         // GIVEN
         StubBucketWriter stubBucketWriter = new StubBucketWriter();
-        DeltaCommitter deltaCommitter = new DeltaCommitter(stubBucketWriter);
+        DeltaCommitter deltaCommitter = new DeltaCommitter(stubBucketWriter, true);
 
         // WHEN
         DeltaCommittable deltaCommittable =
@@ -166,13 +161,6 @@ public class DeltaCommitterTest {
             PendingFileRecoverable pendingFile, long recordCount, long fileSize,
             long lastUpdateTime) {
             super(partitionSpec, fileName, pendingFile, recordCount, fileSize, lastUpdateTime);
-        }
-
-        RecordingDeltaPendingFile(LinkedHashMap<String, String> partitionSpec, Path basePath,
-            String fileName, PendingFileRecoverable pendingFile, long recordCount, long fileSize,
-            long lastUpdateTime, StructType schema, boolean readStats) {
-            super(partitionSpec, fileName, pendingFile, recordCount, fileSize,
-                lastUpdateTime, readStats);
         }
 
         @Override

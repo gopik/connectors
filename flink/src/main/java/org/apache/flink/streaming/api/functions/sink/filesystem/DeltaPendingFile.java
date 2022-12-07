@@ -84,24 +84,7 @@ public class DeltaPendingFile {
                             InProgressFileWriter.PendingFileRecoverable pendingFile,
                             long recordCount,
                             long fileSize,
-                            long lastUpdateTime
-                            ) {
-        this(partitionSpec,
-            fileName,
-            pendingFile,
-            recordCount,
-            fileSize,
-            lastUpdateTime,
-            false);
-    }
-
-    public DeltaPendingFile(LinkedHashMap<String, String> partitionSpec,
-                            String fileName,
-                            InProgressFileWriter.PendingFileRecoverable pendingFile,
-                            long recordCount,
-                            long fileSize,
-                            long lastUpdateTime,
-        boolean readStats) {
+                            long lastUpdateTime) {
 
         this.partitionSpec = partitionSpec;
         this.fileName = fileName;
@@ -227,11 +210,10 @@ public class DeltaPendingFile {
     }
 
     public void onCommit() {
-        if (stats == null) {
+        if (stats == null && pendingFile.getPath() != null) {
             String filePath = PartitionPathUtils.generatePartitionPath(partitionSpec) +
                 this.getFileName();
             try {
-                // Pass absolute path of the parquet file (rootPath + filePath within the root)
                 ParquetFileStats parquetStats = ParquetFileStats.readStats(
                     pendingFile.getPath().toString());
                 DeltaFileStats deltaStats = new DeltaFileStats(parquetStats);
