@@ -259,6 +259,60 @@ public class DeltaEndToEndExecutionITCaseTest {
         assertRowsFromSnapshot(snapshot);
     }
 
+    @RepeatedIfExceptionsTest(suspend = 2000L, repeats = 3)
+    public void testEndToEndReadAllDataTypesWithStats() throws Exception {
+
+        // this test uses test-non-partitioned-delta-table-alltypes table. See README.md from
+        // table's folder for detail information about this table.
+        DeltaTestUtils.initTestForAllDataTypes(sourceTablePath);
+
+        // Making sure that we are using path with schema to file system "file://"
+        Configuration hadoopConfiguration = DeltaTestUtils.getConfigurationWithMockFs();
+
+        Path sourceTablePath = Path.fromLocalFile(new File(this.sourceTablePath));
+        Path sinkTablePath = Path.fromLocalFile(new File(this.sinkTablePath));
+
+        assertThat(sinkTablePath.toUri().getScheme(), equalTo("file"));
+        assertThat(sinkTablePath.toUri().getScheme(), equalTo("file"));
+
+        DeltaSource<RowData> deltaSource = DeltaSource.forBoundedRowData(
+                        sourceTablePath,
+                        hadoopConfiguration
+                )
+                .option("computeDeltaStats", true)
+                .build();
+
+        RowType rowType = RowType.of(ALL_DATA_TABLE_COLUMN_TYPES, ALL_DATA_TABLE_COLUMN_NAMES);
+        DeltaSinkInternal<RowData> deltaSink = DeltaSink.forRowData(
+                        sinkTablePath,
+                        hadoopConfiguration,
+                        rowType)
+                .build();
+
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(PARALLELISM);
+        env.setRuntimeMode(RuntimeExecutionMode.AUTOMATIC);
+        env.setRestartStrategy(RestartStrategies.fixedDelayRestart(5, 1000));
+
+        DataStream<RowData> stream =
+                env.fromSource(deltaSource, WatermarkStrategy.noWatermarks(), "delta-source");
+        stream.sinkTo(deltaSink);
+
+        DeltaTestUtils.testBoundedStream(stream, miniClusterResource);
+
+        Snapshot snapshot = verifyDeltaTable(
+                this.sinkTablePath,
+                rowType,
+                ALL_DATA_TABLE_RECORD_COUNT
+        );
+
+        assertStatsFromSnapshot(snapshot);
+    }
+
+    private void assertStatsFromSnapshot(Snapshot snapshot) throws IOException {
+        
+    }
+
     /**
      * Read entire snapshot using delta standalone and check every column.
      * @param snapshot {@link Snapshot} to read data from.
